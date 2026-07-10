@@ -1,9 +1,11 @@
 'use client';
 
-import { configureApiBaseUrl } from '@pwa-easy-rental/shared-services';
+import { configureApiBaseUrl, isYowyobProdHost } from '@pwa-easy-rental/shared-services';
 
-// Force le proxy admin — indépendant de la détection pathname (basePath Next.js).
-configureApiBaseUrl('/admin/api-rental');
+// Local / MFE : proxy admin. Prod Yowyob : laisser /rental-api (gateway public).
+if (typeof window !== 'undefined' && !isYowyobProdHost()) {
+  configureApiBaseUrl('/admin/api-rental');
+}
 
 type AdminApiProviderProps = {
   children: React.ReactNode;

@@ -45,7 +45,13 @@ const Testimonial = () => {
   const labels = t.testimonials;
 
   useEffect(() => {
-    fetch('/api-rental/api/reviews/featured')
+    const apiBase =
+      typeof window !== 'undefined'
+      && (window.location.hostname === 'rental.yowyob.com'
+        || window.location.hostname.endsWith('.yowyob.com'))
+        ? '/rental-api'
+        : '/api-rental';
+    fetch(`${apiBase}/api/reviews/featured`)
       .then((r) => r.json())
       .then((data) => {
         const reviews = (data.reviews ?? []) as FeaturedReview[];

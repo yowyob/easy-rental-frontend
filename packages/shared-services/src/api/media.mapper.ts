@@ -10,7 +10,10 @@ export function canonicalMediaStoragePath(url: string): string {
   if (!url || typeof url !== 'string') return url;
   let trimmed = url.trim();
   trimmed = trimmed.replace(/^https?:\/\/[^/]+(?::\d+)?/, '');
-  const withoutProxy = trimmed.replace(/^\/(organisation|agency|client)\/api-rental/, '');
+  const withoutProxy = trimmed
+    .replace(/^\/(organisation|agency|client|admin)\/api-rental/, '')
+    .replace(/^\/rental-api/, '')
+    .replace(/^\/api-rental/, '');
   if (withoutProxy.startsWith('/uploads/')) {
     return withoutProxy;
   }
@@ -22,20 +25,27 @@ export function canonicalMediaStoragePath(url: string): string {
 export function resolveMediaDisplayUrl(url: string): string {
   const canonical = canonicalMediaStoragePath(url);
   if (typeof window === 'undefined') return canonical;
+
+  const prefixForUploads = (): string => {
+    const host = window.location.hostname;
+    if (host === 'rental.yowyob.com' || host.endsWith('.yowyob.com')) {
+      return '/rental-api';
+    }
+    const path = window.location.pathname;
+    if (path.startsWith('/organisation')) return '/organisation/api-rental';
+    if (path.startsWith('/agency')) return '/agency/api-rental';
+    if (path.startsWith('/client')) return '/client/api-rental';
+    return '/api-rental';
+  };
+
   try {
     const parsed = new URL(canonical, window.location.origin);
     if (parsed.pathname.startsWith('/uploads/')) {
-      const path = window.location.pathname;
-      if (path.startsWith('/organisation')) return `/organisation/api-rental${parsed.pathname}`;
-      if (path.startsWith('/agency')) return `/agency/api-rental${parsed.pathname}`;
-      if (path.startsWith('/client')) return `/client/api-rental${parsed.pathname}`;
+      return `${prefixForUploads()}${parsed.pathname}`;
     }
   } catch {
     if (canonical.startsWith('/uploads/')) {
-      const path = window.location.pathname;
-      if (path.startsWith('/organisation')) return `/organisation/api-rental${canonical}`;
-      if (path.startsWith('/agency')) return `/agency/api-rental${canonical}`;
-      if (path.startsWith('/client')) return `/client/api-rental${canonical}`;
+      return `${prefixForUploads()}${canonical}`;
     }
   }
   return canonical;
