@@ -1,0 +1,29 @@
+services:
+  rental-frontend:
+    image: "${APP_IMAGE:?APP_IMAGE requis}"
+    container_name: rental-frontend
+    pull_policy: always
+    restart: unless-stopped
+    environment:
+      NODE_ENV: "production"
+      PORT: "3000"
+      API_URL: "http://easy-rental-backend:8080"
+      NEXT_PUBLIC_SUPPORT_URL: "https://rental.yowyob.com"
+    healthcheck:
+      test: ["CMD-SHELL","wget -qO- http://127.0.0.1:3000/ >/dev/null 2>&1 || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 15
+      start_period: 60s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.rental-front.rule=Host(`rental.yowyob.com`)"
+      - "traefik.http.routers.rental-front.entrypoints=websecure"
+      - "traefik.http.routers.rental-front.tls=true"
+      - "traefik.http.routers.rental-front.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.rental-front.priority=10"
+      - "traefik.http.services.rental-front.loadbalancer.server.port=3000"
+      - "traefik.docker.network=yowyob"
+    networks: [yowyob]
+networks:
+  yowyob: { external: true, name: yowyob }

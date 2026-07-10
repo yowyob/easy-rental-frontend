@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-light text-slate-900 antialiased font-sans;
+  }
+}
+
+@layer components {
+  .title-hero {
+    @apply font-[900] italic tracking-tighter leading-[0.85] ;
+  }
+  .card-pwa {
+    @apply bg-white rounded-modern border border-slate-100 shadow-sm transition-all duration-300;
+  }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+}

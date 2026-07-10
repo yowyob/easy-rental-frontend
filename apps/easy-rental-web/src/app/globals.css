@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+
+  html {
+    font-size: 14px;
+  }
+
+  body {
+    @apply bg-white dark:bg-[#0f1323] text-slate-900 dark:text-white;
+    font-family: 'Lato', sans-serif;
+    /* On s'assure que le scroll est autorisé */
+    overflow-y: auto !important;
+  }
+}
+
+/* Optionnel : masquer la scrollbar mais garder le scroll si tu veux un look app  */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "plugins": [{ "name": "next" }],
+    "paths": {
+      "@/*": ["./src/*"],
+      "@landing/*": ["./src/landing/*"],
+      "@client/*": ["./src/consoles/client/*"],
+      "@agency/*": ["./src/consoles/agency/*"],
+      "@organisation/*": ["./src/consoles/organisation/*"],
+      "@admin/*": ["./src/consoles/admin/*"],
+      "@shared-ui/*": ["../../packages/shared-ui/src/*"],
+      "@shared-services/*": ["../../packages/shared-services/src/*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}

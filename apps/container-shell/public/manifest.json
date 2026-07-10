@@ -1,0 +1,22 @@
+{
+  "name": "PWA Easy Rental",
+  "short_name": "EasyRental",
+  "description": "Plateforme globale de location de véhicules",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1323",
+  "theme_color": "#0528d6",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/741/741407.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/741/741407.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

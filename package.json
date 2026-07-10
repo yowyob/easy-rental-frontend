@@ -1,0 +1,33 @@
+{
+  "name": "pwa-easy-rental",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build --filter=@pwa-easy-rental/easy-rental-web",
+    "build:all": "turbo run build",
+    "dev": "npm run dev --workspace=@pwa-easy-rental/easy-rental-web",
+    "dev:legacy": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "clean": "turbo run clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0"
+  },
+  "packageManager": "npm@10.0.0",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@duckdb/duckdb-wasm": "^1.29.0",
+    "date-fns": "^4.1.0",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.556.0",
+    "maplibre-gl": "^4.0.0",
+    "react-router-dom": "^7.10.1"
+  }
+}

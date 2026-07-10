@@ -1,0 +1,47 @@
+{
+  "buildCommand": "cd ../.. && npm ci && npm run build --workspace=@pwa-easy-rental/easy-rental-web",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "rewrites": [
+    {
+      "source": "/api-rental/:path*",
+      "destination": "https://YOUR_API_HOST/:path*"
+    },
+    {
+      "source": "/uploads/:path*",
+      "destination": "https://YOUR_API_HOST/uploads/:path*"
+    },
+    {
+      "source": "/client/api-rental/:path*",
+      "destination": "https://YOUR_API_HOST/:path*"
+    },
+    {
+      "source": "/client/uploads/:path*",
+      "destination": "https://YOUR_API_HOST/uploads/:path*"
+    },
+    {
+      "source": "/agency/api-rental/:path*",
+      "destination": "https://YOUR_API_HOST/:path*"
+    },
+    {
+      "source": "/agency/uploads/:path*",
+      "destination": "https://YOUR_API_HOST/uploads/:path*"
+    },
+    {
+      "source": "/organisation/api-rental/:path*",
+      "destination": "https://YOUR_API_HOST/:path*"
+    },
+    {
+      "source": "/organisation/uploads/:path*",
+      "destination": "https://YOUR_API_HOST/uploads/:path*"
+    },
+    {
+      "source": "/admin/api-rental/:path*",
+      "destination": "https://YOUR_API_HOST/:path*"
+    },
+    {
+      "source": "/admin/uploads/:path*",
+      "destination": "https://YOUR_API_HOST/uploads/:path*"
+    }
+  ]
+}
