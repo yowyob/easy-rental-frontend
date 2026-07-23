@@ -76,6 +76,8 @@ export const BookingWizardModal = ({
     const start = new Date(form.startDate);
     const end = new Date(form.endDate);
     if (end <= start) return null;
+    // No quote / billing preview for a start date already in the past
+    if (start.getTime() < Date.now() - 60_000) return null;
     if (rentalPeriodOverlapsSchedule(form.startDate, form.endDate, schedule)) return null;
     return computeRentalQuote(
       {
@@ -102,6 +104,10 @@ export const BookingWizardModal = ({
     }
     const start = new Date(form.startDate);
     const end = new Date(form.endDate);
+    const earliestAllowed = Date.now() - 60_000; // 1 min grace for form latency
+    if (start.getTime() < earliestAllowed) {
+      add('past', 'La date de départ ne peut pas être dans le passé.');
+    }
     if (end <= start) add('dates', 'La date de retour doit être après le départ.');
     if (rentalPeriodOverlapsSchedule(form.startDate, form.endDate, schedule)) {
       add('schedule', 'Véhicule indisponible sur cette période.');

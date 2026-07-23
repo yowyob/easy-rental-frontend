@@ -142,7 +142,14 @@ export default function OrganisationDashboard() {
       if (isSignUp) {
         const regRes = await authService.registerOrg(form);
         if (!regRes.ok) {
-          const apiMessage = (regRes.data as { message?: string })?.message;
+          const apiMessage = (regRes.data as { message?: string })?.message ?? '';
+          // Cas email non vérifié : message user-friendly, pas de tentative de login
+          if (apiMessage.includes('EMAIL_NOT_VERIFIED') || apiMessage.toLowerCase().includes('not verified')) {
+            return {
+              error: "Compte créé avec succès. Un email de vérification vient d'être envoyé — "
+                + 'consultez votre boîte mail (et vos spams) puis revenez vous connecter.',
+            };
+          }
           return { error: apiMessage || 'Inscription impossible. Vérifiez vos informations.' };
         }
       }
@@ -164,7 +171,14 @@ export default function OrganisationDashboard() {
         }
         return true;
       }
-      return { error: loginRes.error || 'Connexion impossible. Vérifiez email et mot de passe.' };
+      const loginErr = loginRes.error || '';
+      if (isSignUp && (loginErr.includes('EMAIL_NOT_VERIFIED') || loginErr.toLowerCase().includes('not verified'))) {
+        return {
+          error: "Compte créé avec succès. Un email de vérification vient d'être envoyé — "
+            + 'consultez votre boîte mail (et vos spams) puis revenez vous connecter.',
+        };
+      }
+      return { error: loginErr || 'Connexion impossible. Vérifiez email et mot de passe.' };
     } catch {
       return { error: 'Erreur réseau ou serveur indisponible.' };
     }
@@ -213,10 +227,11 @@ export default function OrganisationDashboard() {
 
   if (!isOnboarded) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#f4f7fe] dark:bg-[#080b14] p-6">
-      <OnboardingStepper 
-        orgId={orgData?.id} 
-        initialName={orgData?.name} 
+      <OnboardingStepper
+        orgId={orgData?.id}
+        initialName={orgData?.name}
         initialOrg={orgData}
+        userEmail={userData?.email}
         onComplete={() => { setIsOnboarded(true); fetchProfile(); }} 
         onLogout={() => { clearAuthSession(); window.location.reload(); }} 
         t={t} 
@@ -226,14 +241,15 @@ export default function OrganisationDashboard() {
 
   return (
     <div className="flex h-screen bg-white dark:bg-[#080b14] overflow-hidden transition-colors duration-500">
-      <Sidebar 
-        currentView={currentView} 
-        setCurrentView={setCurrentView} 
-        sidebarOpen={sidebarOpen} 
-        setSidebarOpen={setSidebarOpen} 
-        handleInstall={handleInstallApp} 
-        handleLogout={() => { clearAuthSession(); window.location.reload(); }} 
+      <Sidebar
+        currentView={currentView}
+        setCurrentView={setCurrentView}
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        handleInstall={handleInstallApp}
+        handleLogout={() => { clearAuthSession(); window.location.reload(); }}
         userData={userData}
+        accountType={orgData?.accountType}
         t={t}
       />
       <main className="flex-1 flex flex-col overflow-hidden relative">

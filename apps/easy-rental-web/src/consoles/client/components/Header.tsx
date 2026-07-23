@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useEffect, useState } from "react";
-import { Sun, Moon, LogOut, Car, Home, Ticket, Bell, Route } from "lucide-react";
+import { Sun, Moon, LogOut, Bell, Menu } from "lucide-react";
 import { notifService } from "@pwa-easy-rental/shared-services";
 
 export const Header = ({
@@ -15,7 +15,9 @@ export const Header = ({
   lang,
   setLang,
   onLogout,
+  setSidebarOpen,
   t,
+  onUnreadCountChange,
 }: any) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [scrolled, setScrolled] = useState(false);
@@ -24,14 +26,17 @@ export const Header = ({
     if (userData?.id) {
       const fetchNotifsCount = () => {
         notifService.countUnreadClient(userData.id).then(res => {
-          if (res.ok) setUnreadCount(res.data);
+          if (res.ok) {
+            setUnreadCount(res.data);
+            onUnreadCountChange?.(res.data);
+          }
         });
       };
       fetchNotifsCount();
       const interval = setInterval(fetchNotifsCount, 10000);
       return () => clearInterval(interval);
     }
-  }, [userData?.id]);
+  }, [userData?.id, onUnreadCountChange]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -42,15 +47,23 @@ export const Header = ({
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ease-out border-b ${
+      className={`sticky top-0 z-40 transition-all duration-300 ease-out border-b ${
         scrolled
           ? 'h-14 bg-white/95 dark:bg-[#0f1323]/95 backdrop-blur-xl border-slate-200/80 dark:border-slate-800 shadow-sm'
           : 'h-16 md:h-18 bg-white/80 dark:bg-[#0f1323]/80 backdrop-blur-md border-transparent'
       }`}
     >
-      <div className="h-full max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-8">
-          <button type="button" className="flex items-center gap-2.5 cursor-pointer" onClick={() => setCurrentView("HOME")}>
+      <div className="h-full w-full px-4 md:px-8 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            className="lg:hidden p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Menu"
+          >
+            <Menu size={22} />
+          </button>
+          <button type="button" className="flex items-center gap-2.5 cursor-pointer lg:hidden" onClick={() => setCurrentView("HOME")}>
             <div className={`bg-[#0528d6] rounded-xl flex items-center justify-center text-white shadow-md transition-all ${scrolled ? 'size-8' : 'size-9'}`}>
               <span className="font-semibold italic text-base">E</span>
             </div>
@@ -58,20 +71,9 @@ export const Header = ({
               Easy<span className="text-[#0528d6]">Rental</span>
             </span>
           </button>
-
-          <nav className="hidden lg:flex items-center gap-5">
-            <NavLink label={t?.nav?.home ?? 'Accueil'} active={currentView === "HOME"} onClick={() => setCurrentView("HOME")} icon={<Home size={16} />} />
-            <NavLink label={t?.nav?.catalog ?? 'Catalogue'} active={currentView === "CATALOG"} onClick={() => setCurrentView("CATALOG")} icon={<Car size={16} />} />
-            {isAuth ? (
-              <>
-                <NavLink label={t?.nav?.myTrips ?? 'Mes trajets'} active={currentView === "MY_BOOKINGS"} onClick={() => setCurrentView("MY_BOOKINGS")} icon={<Route size={16} />} />
-                <NavLink label={t?.nav?.reservations ?? 'Réservations'} active={currentView === "MY_RESERVATIONS"} onClick={() => setCurrentView("MY_RESERVATIONS")} icon={<Ticket size={16} />} />
-              </>
-            ) : null}
-          </nav>
         </div>
 
-        <div className="flex items-center gap-2 md:gap-3">
+        <div className="flex items-center gap-2 md:gap-3 ml-auto">
           <button
             type="button"
             onClick={() => {
@@ -98,7 +100,7 @@ export const Header = ({
               <button
                 type="button"
                 onClick={() => setCurrentView("NOTIFICATIONS")}
-                className="relative p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500"
+                className={`relative p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 ${currentView === 'NOTIFICATIONS' ? 'text-[#0528d6]' : ''}`}
               >
                 <Bell size={18} />
                 {unreadCount > 0 ? (
@@ -141,18 +143,3 @@ export const Header = ({
     </header>
   );
 };
-
-const NavLink = ({ label, active, onClick, icon }: any) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className={`relative flex items-center gap-2 text-sm font-medium transition-colors py-1
-      ${active ? "text-[#0528d6]" : "text-slate-500 hover:text-[#0528d6]"}`}
-  >
-    {icon}
-    {label}
-    {active && (
-      <span className="absolute -bottom-1 left-0 right-0 h-0.5 rounded-full bg-[#0528d6]" />
-    )}
-  </button>
-);

@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 import React from 'react';
-import { Phone, User, Trash2, Edit3, ShieldCheck, FileText, BadgeCheck, Info } from 'lucide-react';
+import { Phone, User, Trash2, Edit3, ShieldCheck, FileText, BadgeCheck, Info, DollarSign } from 'lucide-react';
 import { hasPermission } from '../../utils/permissions';
 
-export const DriverCard = ({ driver, onEdit, onViewDetails, onDelete, staffPermissions, t, userData }: any) => {
+export const DriverCard = ({ driver, onEdit, onEditPricing, onViewDetails, onDelete, staffPermissions, t, userData }: any) => {
   return (
     <div className="bg-white dark:bg-[#1a1d2d] rounded-[2rem] p-6 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all group text-left">
       <div className="flex justify-between items-start mb-6">
@@ -32,7 +32,12 @@ export const DriverCard = ({ driver, onEdit, onViewDetails, onDelete, staffPermi
             <Info size={16} />
           </button>
           {hasPermission(userData, staffPermissions, 'driver:update') && (
-              <button onClick={() => onEdit(driver)} className="p-2 text-slate-400 hover:text-[#0528d6] hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-all"><Edit3 size={16}/></button>
+              <>
+                <button onClick={() => onEdit(driver)} title={t.staff.modal.titleEdit} className="p-2 text-slate-400 hover:text-[#0528d6] hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-all"><Edit3 size={16}/></button>
+                {onEditPricing && (
+                  <button onClick={() => onEditPricing(driver)} title={t.driverStatus?.pricingSection || 'Prix / Statut'} className="p-2 text-slate-400 hover:text-[#0528d6] hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-all"><DollarSign size={16}/></button>
+                )}
+              </>
           )}
           {hasPermission(userData, staffPermissions, 'driver:delete') && (
               <button onClick={() => onDelete(driver.id)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-all"><Trash2 size={16}/></button>

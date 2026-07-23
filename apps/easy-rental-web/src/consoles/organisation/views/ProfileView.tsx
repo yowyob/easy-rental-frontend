@@ -101,7 +101,7 @@ export const ProfileView = ({ userData, orgData, onUpdate, t }: ProfileViewProps
           </p>
           <div className="flex flex-wrap justify-center md:justify-start gap-6 text-sm font-bold text-slate-400">
              <span className="flex items-center gap-2 italic"><Mail size={16} className="text-[#0528d6]"/> {userData.email}</span>
-             <span className="flex items-center gap-2 italic"><Clock size={16} className="text-[#0528d6]"/> {t.profile.hiredAt} {new Date(userData.hiredAt).toLocaleDateString()}</span>
+             <span className="flex items-center gap-2 italic"><Clock size={16} className="text-[#0528d6]"/> {t.profile.hiredAt} {(() => { const d = userData.hiredAt ? new Date(userData.hiredAt) : null; return d && !isNaN(d.getTime()) ? d.toLocaleDateString() : '—'; })()}</span>
           </div>
         </div>
       </div>

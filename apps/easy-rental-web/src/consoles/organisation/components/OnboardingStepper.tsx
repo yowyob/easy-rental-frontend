@@ -11,7 +11,7 @@ import { StepperInput } from './StepperInput';
 import { StepperArea } from './StepperArea';
 import { LogoUpload } from './LogoUpload';
 
-export const OnboardingStepper = ({ orgId, initialName, initialOrg, onComplete, onLogout, t }: any) => {
+export const OnboardingStepper = ({ orgId, initialName, initialOrg, userEmail, onComplete, onLogout, t }: any) => {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -23,7 +23,8 @@ export const OnboardingStepper = ({ orgId, initialName, initialOrg, onComplete, 
     postalCode: initialOrg?.postalCode || '',
     region: initialOrg?.region || '',
     phone: initialOrg?.phone || '',
-    email: initialOrg?.email || '',
+    // Pré-rempli avec l'email du compte connecté — modifiable si contact différent
+    email: initialOrg?.email || userEmail || '',
     website: initialOrg?.website || '',
     timezone: initialOrg?.timezone || 'Africa/Douala',
     logoUrl: initialOrg?.logoUrl || '',

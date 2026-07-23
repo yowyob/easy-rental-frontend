@@ -111,22 +111,16 @@ export const authService = {
     }
     return { ok: false, error: res.data?.message || 'Code MFA invalide' };
   },
-  registerOrg: (data: {
-    firstname?: string;
-    lastname?: string;
-    email?: string;
-    password?: string;
-    orgName?: string;
-    org_name?: string;
-  }) =>
-    client.post<any>('/auth/register/organizationOwner', {
-      firstname: data.firstname,
-      lastname: data.lastname,
-      email: data.email,
-      password: data.password,
-      // Backend Jackson SNAKE_CASE expects org_name (orgName alone is ignored → null name → 400)
-      org_name: data.org_name ?? data.orgName,
-    }),
+  registerOrg: (data: any) => client.post<any>('/auth/register/organizationOwner', data),
+  registerFreelance: (data: {
+    firstname: string;
+    lastname: string;
+    email: string;
+    phone: string;
+    city: string;
+    password: string;
+    planId?: string;
+  }) => client.post<any>('/auth/register/freelance', data),
   registerClient: async (data: {
     firstname: string;
     lastname: string;

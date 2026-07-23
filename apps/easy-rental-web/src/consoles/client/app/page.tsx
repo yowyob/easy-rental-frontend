@@ -7,6 +7,7 @@ import { PlatformFeedbackPrompt } from '@shared-ui/components/ui/PlatformFeedbac
 import { SupportChatWidget } from '@pwa-easy-rental/shared-ui';
 
 import { Header } from '../components/Header';
+import { Sidebar } from '../components/Sidebar';
 import { AuthView } from '../views/AuthView';
 import { HomeView } from '../views/HomeView';
 import { CatalogView } from '../views/CatalogView';
@@ -27,8 +28,8 @@ export default function ClientDashboard() {
   const [darkMode, setDarkMode] = useState(false);
   const[, setDeferredPrompt] = useState<any>(null);
 
-  // Ajout de l'état pour gérer le menu mobile du nouveau Header
-  const [, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const[isAuth, setIsAuth] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -183,47 +184,61 @@ export default function ClientDashboard() {
   );
 
   return (
-      <div className="min-h-screen bg-[#f4f7fe] dark:bg-[#0f1323] transition-colors duration-300 font-sans flex flex-col">
-        <Header
-            isAuth={isAuth}
-            userData={userData}
-            currentView={currentView}
-            setCurrentView={setCurrentView}
-            toggleTheme={() => toggleDarkMode()}
-            darkMode={darkMode}
-            lang={lang}
-            setLang={setLang}
-            t={t}
-            setSidebarOpen={setSidebarOpen}
-            onLogout={() => { clearAuthSession(); window.location.reload(); }}
+      <div className="min-h-screen bg-[#f4f7fe] dark:bg-[#0f1323] transition-colors duration-300 font-sans flex">
+        <Sidebar
+          currentView={currentView}
+          setCurrentView={setCurrentView}
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+          handleLogout={() => { clearAuthSession(); window.location.reload(); }}
+          isAuth={isAuth}
+          unreadCount={unreadCount}
+          t={t}
         />
 
-        {isAuth && (
-          <div className="max-w-7xl mx-auto w-full px-4 md:px-8 pt-20 md:pt-[4.5rem]">
-            <PlatformFeedbackPrompt feedbackUrl="http://localhost:3000/feedback" />
-          </div>
-        )}
-
-        <main className={`flex-1 w-full max-w-7xl mx-auto px-4 md:px-8 pb-6 ${isAuth ? 'pt-3' : 'pt-20 md:pt-[4.5rem]'}`}>
-          {currentView === 'HOME' && <HomeView lang={lang} onSearch={() => setCurrentView('CATALOG')} setViewAll={() => setCurrentView('CATALOG')} onSelectVehicle={(id: string) => { setSelectedVehicleId(id); setCurrentView('DETAILS'); }} />}
-          {currentView === 'CATALOG' && <CatalogView lang={lang} userData={userData} />}
-          {currentView === 'DETAILS' && selectedVehicleId && <VehicleDetailsView vehicleId={selectedVehicleId} isAuth={isAuth} onBack={() => setCurrentView('CATALOG')} onAuthRequired={() => setCurrentView('AUTH')} onStartBooking={() => setCurrentView('CATALOG')} />}
-          {currentView === 'MY_BOOKINGS' && <MyBookingsView lang={lang} userData={userData} onNavigateToCatalog={() => setCurrentView('CATALOG')} />}
-          {currentView === 'MY_RESERVATIONS' && <MyReservationsView lang={lang} userData={userData} onNavigateToCatalog={() => setCurrentView('CATALOG')} />}
-          {currentView === 'PROFILE' && (
-            <ProfileView
-              lang={lang}
+        <div className="flex-1 flex flex-col min-w-0">
+          <Header
+              isAuth={isAuth}
               userData={userData}
-              onBack={() => setCurrentView('HOME')}
-              onProfileUpdated={(updated) => setUserData(updated)}
+              currentView={currentView}
+              setCurrentView={setCurrentView}
+              toggleTheme={() => toggleDarkMode()}
+              darkMode={darkMode}
+              lang={lang}
+              setLang={setLang}
+              t={t}
+              setSidebarOpen={setSidebarOpen}
               onLogout={() => { clearAuthSession(); window.location.reload(); }}
-            />
+              onUnreadCountChange={setUnreadCount}
+          />
+
+          {isAuth && (
+            <div className="w-full px-4 md:px-8 pt-4">
+              <PlatformFeedbackPrompt feedbackUrl="http://localhost:3000/feedback" />
+            </div>
           )}
 
-          {currentView === 'NOTIFICATIONS' && <NotificationsView clientId={userData?.id} />}
-        </main>
-        <Footer t={t.footer} nav={{ features: t.footer.features }} landingBaseUrl="http://localhost:3000" />
-        {isAuth && <SupportChatWidget />}
+          <main className="flex-1 w-full px-4 md:px-8 py-6">
+            {currentView === 'HOME' && <HomeView lang={lang} onSearch={() => setCurrentView('CATALOG')} setViewAll={() => setCurrentView('CATALOG')} onSelectVehicle={(id: string) => { setSelectedVehicleId(id); setCurrentView('DETAILS'); }} />}
+            {currentView === 'CATALOG' && <CatalogView lang={lang} userData={userData} />}
+            {currentView === 'DETAILS' && selectedVehicleId && <VehicleDetailsView vehicleId={selectedVehicleId} isAuth={isAuth} onBack={() => setCurrentView('CATALOG')} onAuthRequired={() => setCurrentView('AUTH')} onStartBooking={() => setCurrentView('CATALOG')} />}
+            {currentView === 'MY_BOOKINGS' && <MyBookingsView lang={lang} userData={userData} onNavigateToCatalog={() => setCurrentView('CATALOG')} />}
+            {currentView === 'MY_RESERVATIONS' && <MyReservationsView lang={lang} userData={userData} onNavigateToCatalog={() => setCurrentView('CATALOG')} />}
+            {currentView === 'PROFILE' && (
+              <ProfileView
+                lang={lang}
+                userData={userData}
+                onBack={() => setCurrentView('HOME')}
+                onProfileUpdated={(updated) => setUserData(updated)}
+                onLogout={() => { clearAuthSession(); window.location.reload(); }}
+              />
+            )}
+
+            {currentView === 'NOTIFICATIONS' && <NotificationsView clientId={userData?.id} />}
+          </main>
+          <Footer t={t.footer} nav={{ features: t.footer.features }} landingBaseUrl="http://localhost:3000" />
+          {isAuth && <SupportChatWidget />}
+        </div>
       </div>
   );
 }

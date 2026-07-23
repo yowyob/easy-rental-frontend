@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Building2, Store, Car } from 'lucide-react';
+import { ArrowRight, Building2, Sparkles, Car } from 'lucide-react';
 import { MFE_URLS } from '../config/mfe-urls';
 import { LandingSection, SectionTitle } from './landing/LandingSection';
 
@@ -17,14 +17,14 @@ export const Solutions = ({ t }: any) => {
       url: MFE_URLS.organisation,
     },
     {
-      icon: Store,
+      icon: Sparkles,
       gradient: 'from-orange-500 to-amber-600',
       image: '/images/solutions/agency.png',
-      label: 'Manager View',
+      label: 'Solo View',
       title: t.agency,
       desc: t.agencyDesc,
       highlight: t.agencyHighlight,
-      url: MFE_URLS.agency,
+      url: MFE_URLS.freelance,
     },
     {
       icon: Car,

@@ -1,11 +1,5 @@
 // FILE: packages/shared-services/src/api/index.ts
-export {
-  ApiClient,
-  createApiClient,
-  configureApiBaseUrl,
-  getBrowserApiBaseUrl,
-  isYowyobProdHost,
-} from './api-client';
+export { ApiClient, createApiClient, configureApiBaseUrl } from './api-client';
 export type { ApiConfig, ApiResponse, ApiError } from './api-client';
 
 export { authService } from './auth.service';

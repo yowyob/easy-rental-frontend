@@ -9,6 +9,8 @@ type DateTimePickerProps = {
   value: string;
   onChange: (isoLocal: string) => void;
   required?: boolean;
+  /** YYYY-MM-DD — defaults to today so past calendar days cannot be selected */
+  minDate?: string;
 };
 
 function parseValue(value: string) {
@@ -28,8 +30,14 @@ function parseValue(value: string) {
   return { date, hour: hour?.padStart(2, '0') ?? '00', minute: snapped };
 }
 
-export const DateTimePicker = ({ label, value, onChange, required }: DateTimePickerProps) => {
+export const DateTimePicker = ({ label, value, onChange, required, minDate }: DateTimePickerProps) => {
   const parts = useMemo(() => parseValue(value), [value]);
+  const todayLocal = useMemo(() => {
+    const now = new Date();
+    const tzOffset = now.getTimezoneOffset() * 60_000;
+    return new Date(now.getTime() - tzOffset).toISOString().slice(0, 10);
+  }, []);
+  const effectiveMinDate = minDate ?? todayLocal;
 
   const emit = (date: string, hour: string, minute: string) => {
     onChange(`${date}T${hour}:${minute}`);
@@ -42,6 +50,7 @@ export const DateTimePicker = ({ label, value, onChange, required }: DateTimePic
         <input
           type="date"
           required={required}
+          min={effectiveMinDate}
           value={parts.date}
           onChange={(e) => emit(e.target.value, parts.hour, parts.minute)}
           className="w-full p-3 bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-xl font-bold text-xs outline-none focus:border-[#0528d6] dark:text-white"

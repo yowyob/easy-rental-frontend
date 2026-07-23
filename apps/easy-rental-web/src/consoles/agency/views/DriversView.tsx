@@ -15,10 +15,11 @@ export const DriversView = ({ userData, t, staffPermissions }: any) => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   
-  // États pour la création
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  
-  // États pour l'édition (Prix / Statut / Planning)
+  // États pour la création / édition complète (DriverFormModal)
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [editingDriver, setEditingDriver] = useState<any>(null);
+
+  // États pour l'édition rapide (Prix / Statut / Planning)
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState<any>(null);
   const [viewingDriverId, setViewingDriverId] = useState<string | null>(null);
@@ -38,16 +39,23 @@ export const DriversView = ({ userData, t, staffPermissions }: any) => {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // Handler pour la création (Multipart)
-  const handleCreateSubmit = async (formData: FormData) => {
+  // Handler pour la création (Multipart) OU l'édition selon editingDriver
+  const handleFormSubmit = async (formData: FormData) => {
     setModalLoading(true);
     setBackendError(null);
     try {
-      formData.append('agencyId', userData.agencyId);
-      const res = await driverService.createDriver(userData.organizationId, formData);
-      if (res.ok) { 
-        setIsCreateModalOpen(false); 
-        loadData(); 
+      let res;
+      if (editingDriver) {
+        res = await driverService.updateDriver(editingDriver.id, formData);
+      } else {
+        formData.append('agencyId', userData.agencyId);
+        res = await driverService.createDriver(userData.organizationId, formData);
+      }
+      if (res.ok) {
+        setIsFormModalOpen(false);
+        setEditingDriver(null);
+        setDetailsRefreshKey((k) => k + 1);
+        loadData();
       } else {
         setBackendError(res.data?.message || t.staff.errorSave);
       }
@@ -131,8 +139,8 @@ export const DriversView = ({ userData, t, staffPermissions }: any) => {
           />
         </div>
         {hasPermission(userData, staffPermissions, 'driver:create') && (
-            <button 
-                onClick={() => { setBackendError(null); setIsCreateModalOpen(true); }}
+            <button
+                onClick={() => { setBackendError(null); setEditingDriver(null); setIsFormModalOpen(true); }}
                 className="w-full sm:w-auto px-8 py-3.5 bg-[#0528d6] text-white rounded-2xl font-black text-[11px] uppercase shadow-xl shadow-blue-600/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 italic tracking-widest"
             >
                 <Plus size={18} /> {t.staff.addBtn}
@@ -149,10 +157,15 @@ export const DriversView = ({ userData, t, staffPermissions }: any) => {
             staffPermissions={staffPermissions}
             t={t}
             userData={userData}
-            onEdit={(driver: any) => { 
-                setSelectedDriver(driver); 
-                setBackendError(null); 
-                setIsStatusModalOpen(true); 
+            onEdit={(driver: any) => {
+                setEditingDriver(driver);
+                setBackendError(null);
+                setIsFormModalOpen(true);
+            }}
+            onEditPricing={(driver: any) => {
+                setSelectedDriver(driver);
+                setBackendError(null);
+                setIsStatusModalOpen(true);
             }}
             onViewDetails={(driver: any) => setViewingDriverId(driver.id)}
             onDelete={async (id: string) => { 
@@ -165,14 +178,15 @@ export const DriversView = ({ userData, t, staffPermissions }: any) => {
         ))}
       </div>
 
-      {/* MODAL : CREATION (DOCUMENTS) */}
-      {isCreateModalOpen && (
-        <DriverFormModal 
-            t={t} 
-            onClose={() => setIsCreateModalOpen(false)} 
-            onSubmit={handleCreateSubmit} 
-            modalLoading={modalLoading} 
-            error={backendError} 
+      {/* MODAL : CREATION ou EDITION COMPLETE */}
+      {isFormModalOpen && (
+        <DriverFormModal
+            t={t}
+            editingDriver={editingDriver}
+            onClose={() => { setIsFormModalOpen(false); setEditingDriver(null); }}
+            onSubmit={handleFormSubmit}
+            modalLoading={modalLoading}
+            error={backendError}
         />
       )}
 

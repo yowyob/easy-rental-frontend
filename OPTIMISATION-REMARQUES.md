@@ -456,3 +456,15 @@ Document vivant : chaque remarque terrain est ajoutée ici, puis traitée par pr
 - **Symptômes :** cartes avec `border-l-4` bleu et bordures épaisses ; barre recherche/filtres trop chargée.
 - **Piste résolue :** composants partagés `NotificationCard`, `NotificationsFilterBar`, `NotificationsEmptyState` — bordure fine uniforme type barre Google, pastille bleue discrète pour non-lu, sans bandeau latéral.
 
+#### UX-059 — Catalogue client : siège sans ville/adresse invisible
+- **Priorité :** P0 | **Statut :** Corrigé
+- **Apps :** client (`/client` → Agences)
+- **Symptômes :** `azerty - Siège` absent du catalogue alors qu’il existe en BDD (ville/adresse vides).
+- **Piste résolue :** `findCatalogAgencies` n’exige plus city/address ; filtre FE `isPublishableCatalogAgency` assoupli ; backfill adresse siège azerty.
+
+#### UX-060 — Réservation sur date passée encore facturée
+- **Priorité :** P0 | **Statut :** Corrigé
+- **Apps :** client (wizard réservation) + backend rental
+- **Symptômes :** devis et `initiateRental` acceptaient un départ dans le passé.
+- **Piste résolue :** `validateRentalWindow` (BE) ; `DateTimePicker` `min=today` ; blocage + pas de devis si départ passé (`BookingWizardModal`).
+

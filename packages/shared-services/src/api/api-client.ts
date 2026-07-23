@@ -157,27 +157,7 @@ export function configureApiBaseUrl(baseUrl: string): void {
   apiBaseOverride = baseUrl.replace(/\/$/, '');
 }
 
-/** Prod Yowyob : gateway public `/rental-api` (les rewrites Next `*/api-rental` y renvoient 500). */
-export function isYowyobProdHost(hostname?: string): boolean {
-  const host = hostname
-    ?? (typeof window !== 'undefined' ? window.location.hostname : '');
-  return host === 'rental.yowyob.com' || host.endsWith('.yowyob.com');
-}
-
-/** Base API navigateur : gateway prod ou proxy Next local. */
-export function getBrowserApiBaseUrl(): string {
-  if (typeof window !== 'undefined' && isYowyobProdHost()) {
-    return '/rental-api';
-  }
-  return getDynamicBaseUrl();
-}
-
 const getDynamicBaseUrl = () => {
-  // Prod publique : ne pas passer par /organisation/api-rental (rewrite Next cassé).
-  if (typeof window !== 'undefined' && isYowyobProdHost()) {
-    return '/rental-api';
-  }
-
   if (apiBaseOverride) {
     return apiBaseOverride;
   }

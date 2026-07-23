@@ -1,18 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
-import React, { useState } from 'react';
-import { X, Loader2, User, Phone, Shield, FileText, DollarSign } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { X, Loader2, User, Phone, Shield, FileText, DollarSign, Camera, Upload } from 'lucide-react';
 import { normalizeCmPhone, isValidCmMobile } from '@pwa-easy-rental/shared-services';
 import { DocumentUploadZone } from '@pwa-easy-rental/shared-ui';
 import { Portal } from '../../components/Portal';
 
 export const DriverFormModal = ({ editingDriver, onSubmit, onClose, modalLoading, error, t }: any) => {
+  const isEdit = Boolean(editingDriver);
+
   const [form, setForm] = useState({
     firstname: editingDriver?.firstname || '',
     lastname: editingDriver?.lastname || '',
     tel: editingDriver?.tel || '',
     age: editingDriver?.age || '',
-    gender: editingDriver?.gender || 0,
+    gender: editingDriver?.gender ?? 0,
     cniNumber: editingDriver?.cniNumber || '',
     licenseNumber: editingDriver?.licenseNumber || '',
     licenseExpiry: editingDriver?.licenseExpiry || '',
@@ -28,6 +30,11 @@ export const DriverFormModal = ({ editingDriver, onSubmit, onClose, modalLoading
     license: null as File | null,
   });
 
+  const profilPreviewUrl = useMemo(() => {
+    if (files.profil) return URL.createObjectURL(files.profil);
+    return editingDriver?.profilUrl || '';
+  }, [files.profil, editingDriver?.profilUrl]);
+
   const phoneValid = !form.tel || isValidCmMobile(form.tel);
 
   const handleLocalSubmit = (e: React.FormEvent) => {
@@ -35,16 +42,25 @@ export const DriverFormModal = ({ editingDriver, onSubmit, onClose, modalLoading
     if (!phoneValid) return;
     const formData = new FormData();
     Object.entries(form).forEach(([k, v]) => {
+      // En édition on n'envoie que les champs de prix modifiés (backend ignore pricing ici, endpoint dédié)
+      if (isEdit && (k === 'pricePerHour' || k === 'pricePerDay' || k === 'pricePerMonth')) return;
       if (v !== '' && v !== null && v !== undefined) formData.append(k, v.toString());
     });
-    formData.set('tel', normalizeCmPhone(form.tel));
-    if (form.pricePerHour !== '') formData.append('pricePerHour', form.pricePerHour.toString());
-    if (form.pricePerDay !== '') formData.append('pricePerDay', form.pricePerDay.toString());
-    if (form.pricePerMonth !== '') formData.append('pricePerMonth', form.pricePerMonth.toString());
+    if (form.tel) formData.set('tel', normalizeCmPhone(form.tel));
+    if (!isEdit) {
+      if (form.pricePerHour !== '') formData.append('pricePerHour', form.pricePerHour.toString());
+      if (form.pricePerDay !== '') formData.append('pricePerDay', form.pricePerDay.toString());
+      if (form.pricePerMonth !== '') formData.append('pricePerMonth', form.pricePerMonth.toString());
+    }
     if (files.profil) formData.append('profil', files.profil);
     if (files.cni) formData.append('cni', files.cni);
     if (files.license) formData.append('license', files.license);
     onSubmit(formData);
+  };
+
+  const handleProfilChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) setFiles((p) => ({ ...p, profil: file }));
   };
 
   return (
@@ -75,6 +91,38 @@ export const DriverFormModal = ({ editingDriver, onSubmit, onClose, modalLoading
                 {error}
               </div>
             )}
+
+            {/* BLOC PHOTO PROFIL — Haut du formulaire, preview visible */}
+            <div className="flex flex-col sm:flex-row items-center gap-6 p-6 bg-slate-50/50 dark:bg-slate-900/50 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-700">
+              <div className="relative shrink-0">
+                <div className="size-32 rounded-3xl overflow-hidden border-4 border-white dark:border-slate-800 shadow-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                  {profilPreviewUrl ? (
+                    <img src={profilPreviewUrl} alt="Profil" className="w-full h-full object-cover" />
+                  ) : (
+                    <Camera size={38} className="text-slate-300" />
+                  )}
+                </div>
+                <label className="absolute -bottom-2 -right-2 size-11 rounded-2xl bg-[#0528d6] text-white flex items-center justify-center shadow-xl cursor-pointer hover:scale-110 transition-transform">
+                  <Upload size={16} />
+                  <input type="file" accept="image/*" className="hidden" onChange={handleProfilChange} />
+                </label>
+              </div>
+              <div className="text-center sm:text-left space-y-1">
+                <h4 className="text-sm font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">
+                  {t.driverForm.photoProfil}
+                </h4>
+                <p className="text-[10px] font-bold uppercase italic tracking-widest text-slate-400">
+                  {isEdit
+                    ? (t.driverForm?.photoOptional || 'Laisser vide pour conserver la photo actuelle')
+                    : (t.driverForm?.photoRequired || 'Photo obligatoire — JPG, PNG, WEBP (max 16 Mo)')}
+                </p>
+                {files.profil && (
+                  <p className="text-[10px] font-black uppercase italic tracking-widest text-[#0528d6]">
+                    {files.profil.name}
+                  </p>
+                )}
+              </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
               <Input label={t.auth.firstname} value={form.firstname} onChange={(v: string) => setForm({ ...form, firstname: v })} required icon={<User size={14} />} />
@@ -109,47 +157,50 @@ export const DriverFormModal = ({ editingDriver, onSubmit, onClose, modalLoading
               </div>
             </div>
 
+            {!isEdit && (
+              <div className="space-y-4 pt-4 border-t border-slate-50 dark:border-slate-800 text-left">
+                <h4 className="text-[10px] font-black uppercase text-[#0528d6] tracking-[0.2em] italic flex items-center gap-2">
+                  <DollarSign size={14} /> {t.driverStatus.pricingSection}
+                </h4>
+                <p className="text-[9px] font-bold text-slate-400 uppercase italic tracking-widest -mt-2">
+                  {t.driverForm.pricingHint}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <Input
+                    label={t.driverStatus.pricePerHour}
+                    type="text"
+                    inputMode="numeric"
+                    value={form.pricePerHour}
+                    onChange={(v: string) => setForm({ ...form, pricePerHour: v.replace(/[^\d]/g, '') })}
+                    required
+                  />
+                  <Input
+                    label={t.driverStatus.pricePerDay}
+                    type="text"
+                    inputMode="numeric"
+                    value={form.pricePerDay}
+                    onChange={(v: string) => setForm({ ...form, pricePerDay: v.replace(/[^\d]/g, '') })}
+                    required
+                  />
+                  <Input
+                    label={t.driverStatus.pricePerMonth}
+                    type="text"
+                    inputMode="numeric"
+                    value={form.pricePerMonth}
+                    onChange={(v: string) => setForm({ ...form, pricePerMonth: v.replace(/[^\d]/g, '') })}
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="space-y-4 pt-4 border-t border-slate-50 dark:border-slate-800 text-left">
-              <h4 className="text-[10px] font-black uppercase text-[#0528d6] tracking-[0.2em] italic flex items-center gap-2">
-                <DollarSign size={14} /> {t.driverStatus.pricingSection}
+              <h4 className="text-[10px] font-black uppercase text-[#0528d6] tracking-[0.2em] italic mb-2">
+                {isEdit ? (t.driverForm?.scanDocsOptional || 'Documents (optionnels en édition)') : t.driverForm.scanDocs}
               </h4>
-              <p className="text-[9px] font-bold text-slate-400 uppercase italic tracking-widest -mt-2">
-                {t.driverForm.pricingHint}
-              </p>
               <p className="text-[9px] font-bold text-slate-400 uppercase italic tracking-widest">
                 JPG, PNG, WEBP ou PDF — max 16 Mo par document
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Input
-                  label={t.driverStatus.pricePerHour}
-                  type="text"
-                  inputMode="numeric"
-                  value={form.pricePerHour}
-                  onChange={(v: string) => setForm({ ...form, pricePerHour: v.replace(/[^\d]/g, '') })}
-                  required
-                />
-                <Input
-                  label={t.driverStatus.pricePerDay}
-                  type="text"
-                  inputMode="numeric"
-                  value={form.pricePerDay}
-                  onChange={(v: string) => setForm({ ...form, pricePerDay: v.replace(/[^\d]/g, '') })}
-                  required
-                />
-                <Input
-                  label={t.driverStatus.pricePerMonth}
-                  type="text"
-                  inputMode="numeric"
-                  value={form.pricePerMonth}
-                  onChange={(v: string) => setForm({ ...form, pricePerMonth: v.replace(/[^\d]/g, '') })}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-4 pt-4 border-t border-slate-50 dark:border-slate-800 text-left">
-              <h4 className="text-[10px] font-black uppercase text-[#0528d6] tracking-[0.2em] italic mb-6">{t.driverForm.scanDocs}</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <DocumentUploadZone label={t.driverForm.photoProfil} onFile={(f) => setFiles((p) => ({ ...p, profil: f }))} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <DocumentUploadZone label={t.driverForm.scanCni} onFile={(f) => setFiles((p) => ({ ...p, cni: f }))} />
                 <DocumentUploadZone label={t.driverForm.scanLicense} onFile={(f) => setFiles((p) => ({ ...p, license: f }))} />
               </div>
@@ -164,9 +215,8 @@ export const DriverFormModal = ({ editingDriver, onSubmit, onClose, modalLoading
               disabled={
                 modalLoading ||
                 !phoneValid ||
-                form.pricePerHour === '' ||
-                form.pricePerDay === '' ||
-                (!editingDriver && (!files.profil || !files.cni || !files.license))
+                (!isEdit && (form.pricePerHour === '' || form.pricePerDay === '')) ||
+                (!isEdit && (!files.profil || !files.cni || !files.license))
               }
               className="flex-[2] py-4 bg-[#0528d6] text-white rounded-2xl font-black text-xs uppercase shadow-xl hover:bg-blue-700 flex items-center justify-center gap-2 disabled:grayscale disabled:opacity-50 italic tracking-widest"
             >

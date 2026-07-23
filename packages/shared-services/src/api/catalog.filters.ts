@@ -55,13 +55,9 @@ export function filterCatalogVehicles(vehicles: unknown): any[] {
 export function isPublishableCatalogAgency(agency: any): boolean {
   if (!agency?.id) return false;
   const name = String(agency.name ?? '').trim();
-  if (name.length < 3) return false;
+  // Siège / HQ : souvent nom court ("HQ", "Siège") sans ville complète
+  if (name.length < 2) return false;
   if (agency.allowOnlineBooking === false) return false;
-
-  const city = String(agency.city ?? '').trim();
-  const address = String(agency.address ?? '').trim();
-  if (!city && !address) return false;
-
   return true;
 }
 

@@ -1,3 +1,5 @@
+export type PlanTargetType = 'COMPANY' | 'FREELANCE';
+
 export type NormalizedSubscriptionPlan = {
   id: string;
   name: string;
@@ -12,6 +14,7 @@ export type NormalizedSubscriptionPlan = {
   hasChat: boolean;
   billingPeriod: 'MONTHLY' | 'YEARLY' | 'UNLIMITED';
   monthlyEquivalentPrice: number;
+  targetType: PlanTargetType;
 };
 
 export type NormalizedSubscription = {
@@ -55,6 +58,8 @@ export function normalizeSubscriptionPlan(raw: Record<string, unknown>): Normali
   const durationDays = num(raw.durationDays ?? raw.duration_days);
   const price = num(raw.price);
   const name = String(raw.name ?? '');
+  const rawTarget = String(raw.targetType ?? raw.target_type ?? 'COMPANY').toUpperCase();
+  const targetType: PlanTargetType = rawTarget === 'FREELANCE' ? 'FREELANCE' : 'COMPANY';
   return {
     id: String(raw.id ?? ''),
     name,
@@ -69,6 +74,7 @@ export function normalizeSubscriptionPlan(raw: Record<string, unknown>): Normali
     hasChat: Boolean(raw.hasChat ?? raw.has_chat),
     billingPeriod: resolveBillingPeriod(durationDays, name),
     monthlyEquivalentPrice: resolveMonthlyEquivalent(price, durationDays),
+    targetType,
   };
 }
 
@@ -112,6 +118,7 @@ export function toPlanApiPayload(data: {
   maxUsers?: number;
   hasGeofencing?: boolean;
   hasChat?: boolean;
+  targetType?: PlanTargetType;
 }): Record<string, unknown> {
   return {
     name: data.name,
@@ -124,5 +131,6 @@ export function toPlanApiPayload(data: {
     max_users: data.maxUsers,
     has_geofencing: data.hasGeofencing,
     has_chat: data.hasChat,
+    target_type: data.targetType ?? 'COMPANY',
   };
 }

@@ -27,7 +27,16 @@ export const SubscriptionView = ({ orgData, t }: any) => {
         agencyService.getAgencies(orgData.id)
       ]);
       
-      if (plansRes.ok) setPlans(plansRes.data);
+      if (plansRes.ok) {
+        // Filtrer les plans selon le type de compte : un freelance ne voit
+        // que les plans FREELANCE_*, une société ne voit que les plans COMPANY.
+        const orgType = (orgData?.accountType || 'COMPANY').toUpperCase();
+        const filtered = (plansRes.data as any[]).filter((p) => {
+          const target = (p.targetType || 'COMPANY').toUpperCase();
+          return target === orgType;
+        });
+        setPlans(filtered);
+      }
       if (subRes.ok) setCurrentSub(subRes.data);
       if (agenciesRes.ok) setRealAgenciesCount(agenciesRes.data?.length || 0);
       

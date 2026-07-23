@@ -1,6 +1,6 @@
 import { defaultClient as client } from './api-client';
 import { extractUploadedMediaUrl, canonicalMediaStoragePath } from './media.mapper';
-import { normalizeSubscriptionPlan, toPlanApiPayload } from './subscription.mapper';
+import { normalizeSubscriptionPlan, toPlanApiPayload, type PlanTargetType } from './subscription.mapper';
 
 export type CreatePlanPayload = {
   name: string;
@@ -13,6 +13,7 @@ export type CreatePlanPayload = {
   maxUsers?: number;
   hasGeofencing?: boolean;
   hasChat?: boolean;
+  targetType?: PlanTargetType;
 };
 
 export const extraService = {
@@ -34,16 +35,23 @@ export const extraService = {
     client.put<Record<string, unknown>>(`/api/subscriptions/plans/${id}`, toPlanApiPayload(data as CreatePlanPayload)),
   getPermissions: () => client.get<any[]>('/api/permissions'),
   uploadMedia: async (formData: FormData) => {
-    const res = await client.post<Record<string, unknown>>('/api/media/upload', formData);
-    const url = extractUploadedMediaUrl(res.data);
-    if (!res.ok || !url) {
-      const message = (res.data as { message?: string } | null)?.message;
-      return {
-        ...res,
-        ok: false,
-        data: { message: message || 'Échec de l\'upload du fichier' },
-      };
+    const token = (await import('../auth/auth-session')).getStoredToken();
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token.trim()}`;
+
+    let res: Response;
+    try {
+      res = await fetch('/api/media-upload', { method: 'POST', headers, body: formData });
+    } catch {
+      return { ok: false, status: 0, data: { message: 'Erreur réseau lors de l\'upload' } };
     }
-    return { ...res, data: { url: canonicalMediaStoragePath(url) } };
+
+    const raw = await res.json().catch(() => null) as Record<string, unknown> | null;
+    const url = extractUploadedMediaUrl(raw);
+    if (!res.ok || !url) {
+      const message = (raw as { message?: string } | null)?.message;
+      return { ok: false, status: res.status, data: { message: message || 'Échec de l\'upload du fichier' } };
+    }
+    return { ok: true, status: res.status, data: { url: canonicalMediaStoragePath(url) } };
   },
 };

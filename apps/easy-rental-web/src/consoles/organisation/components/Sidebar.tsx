@@ -9,14 +9,19 @@ import {
 } from 'lucide-react';
 
 export const Sidebar = ({
-  currentView, 
-  setCurrentView, 
-  sidebarOpen, 
-  setSidebarOpen, 
-  handleInstall, 
+  currentView,
+  setCurrentView,
+  sidebarOpen,
+  setSidebarOpen,
+  handleInstall,
   handleLogout,
+  accountType,
   t
-}: any) => (
+}: any) => {
+  // Un freelance est un particulier : pas d'agences (auto-créée), pas de staff,
+  // pas de postes/rôles. On masque ces menus pour éviter la confusion.
+  const isFreelance = (accountType || '').toUpperCase() === 'FREELANCE';
+  return (
   <aside className={`${sidebarOpen ? 'fixed inset-0 z-[200]' : 'hidden'} lg:relative lg:flex lg:w-72 flex-col h-screen shrink-0 transition-all duration-300 bg-slate-50 border-r-2 border-slate-200 dark:bg-[#080b14] dark:border-slate-800 shadow-xl`}>
     {sidebarOpen && <div className="absolute inset-0 backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />}
     
@@ -42,16 +47,22 @@ export const Sidebar = ({
             <SidebarItem icon={<CalendarDays size={20}/>} label={t.sidebar.reservations} active={currentView === 'RESERVATIONS'} onClick={() => {setCurrentView('RESERVATIONS'); setSidebarOpen(false);}} />
             <SidebarItem icon={<CalendarCheck size={20}/>} label={t.sidebar.rentals} active={currentView === 'RENTALS'} onClick={() => {setCurrentView('RENTALS'); setSidebarOpen(false);}} />
             <SidebarItem icon={<Banknote size={20}/>} label={t.sidebar.transactions} active={currentView === 'TRANSACTIONS'} onClick={() => {setCurrentView('TRANSACTIONS'); setSidebarOpen(false);}} />
-            <SidebarItem icon={<Store size={20}/>} label={t.sidebar.agencies} active={currentView === 'AGENCIES'} onClick={() => {setCurrentView('AGENCIES'); setSidebarOpen(false);}} />
+            {!isFreelance && (
+              <SidebarItem icon={<Store size={20}/>} label={t.sidebar.agencies} active={currentView === 'AGENCIES'} onClick={() => {setCurrentView('AGENCIES'); setSidebarOpen(false);}} />
+            )}
           </div>
         </div>
 
         <div>
           <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 px-2 italic">{t.sidebar.network}</p>
           <div className="space-y-1">
-            <SidebarItem icon={<ShieldCheck size={20}/>} label={t.sidebar.roles} active={currentView === 'ROLES'} onClick={() => {setCurrentView('ROLES'); setSidebarOpen(false);}} />
-            <SidebarItem icon={<UserCircle size={20}/>} label={t.sidebar.staff} active={currentView === 'STAFF'} onClick={() => {setCurrentView('STAFF'); setSidebarOpen(false);}} />
-            <SidebarItem icon={<LayoutGrid size={20}/>} label={t.sidebar.categories} active={currentView === 'CATEGORIES'} onClick={() => {setCurrentView('CATEGORIES'); setSidebarOpen(false);}} />
+            {!isFreelance && (
+              <>
+                <SidebarItem icon={<ShieldCheck size={20}/>} label={t.sidebar.roles} active={currentView === 'ROLES'} onClick={() => {setCurrentView('ROLES'); setSidebarOpen(false);}} />
+                <SidebarItem icon={<UserCircle size={20}/>} label={t.sidebar.staff} active={currentView === 'STAFF'} onClick={() => {setCurrentView('STAFF'); setSidebarOpen(false);}} />
+                <SidebarItem icon={<LayoutGrid size={20}/>} label={t.sidebar.categories} active={currentView === 'CATEGORIES'} onClick={() => {setCurrentView('CATEGORIES'); setSidebarOpen(false);}} />
+              </>
+            )}
             <SidebarItem icon={<Car size={20}/>} label={t.sidebar.vehicles} active={currentView === 'VEHICLES'} onClick={() => {setCurrentView('VEHICLES'); setSidebarOpen(false);}} />
             <SidebarItem icon={<CreditCard size={20}/>} label={t.sidebar.subscription} active={currentView === 'SUBSCRIPTION'} onClick={() => {setCurrentView('SUBSCRIPTION'); setSidebarOpen(false);}} />
           </div>
@@ -83,7 +94,8 @@ export const Sidebar = ({
       </div>
     </div>
   </aside>
-);
+  );
+};
 
 const SidebarItem = ({ icon, label, active, onClick }: any) => (
   <button onClick={onClick} className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group ${active ? 'bg-[#0528d6] text-white shadow-lg shadow-blue-600/20 font-bold italic' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800'}`}>

@@ -150,15 +150,24 @@ export const AuthView = ({ onAuth, lang, setLang, darkMode, toggleTheme, t }: an
                 </button>
               </form>
 
-              <div className="mt-10 flex flex-col items-center gap-6 shrink-0">
-                <button 
-                  onClick={() => { setIsSignUp(!isSignUp); setError(''); }} 
+              <div className="mt-10 flex flex-col items-center gap-4 shrink-0">
+                <button
+                  onClick={() => { setIsSignUp(!isSignUp); setError(''); }}
                   className="text-xs font-bold text-slate-400 hover:text-[#0528d6] transition-colors tracking-tight italic"
                 >
                   {isSignUp ? t.auth.toggleSignIn : t.auth.toggleSignUp}
                 </button>
 
-                <div className="flex items-center justify-center gap-1 pt-6 border-t border-slate-50 dark:border-slate-800 w-full">
+                <a
+                  href="/organisation/freelance-signup"
+                  className="text-[10px] font-black italic uppercase tracking-widest text-slate-400 hover:text-[#0528d6] transition-colors"
+                >
+                  Vous êtes un particulier ? Devenir freelance →
+                </a>
+
+                <div className="w-full h-px bg-slate-100 dark:bg-slate-800 my-2" />
+
+                <div className="flex items-center justify-center gap-1 w-full">
                   <HeaderIconButton
                     onClick={() => setLang(lang === 'FR' ? 'EN' : 'FR')}
                     aria-label={t.header.switchLanguage}

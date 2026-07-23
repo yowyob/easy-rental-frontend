@@ -15,6 +15,10 @@ function buildApiRewrites(apiBaseUrl) {
       source: '/uploads/:path*',
       destination: `${apiBaseUrl}/uploads/:path*`,
     },
+    {
+      source: '/api/media/kernel-file/:path*',
+      destination: `${apiBaseUrl}/api/media/kernel-file/:path*`,
+    },
   ];
 
   for (const prefix of CONSOLE_API_PREFIXES) {
@@ -26,6 +30,10 @@ function buildApiRewrites(apiBaseUrl) {
       {
         source: `/${prefix}/uploads/:path*`,
         destination: `${apiBaseUrl}/uploads/:path*`,
+      },
+      {
+        source: `/${prefix}/api/media/kernel-file/:path*`,
+        destination: `${apiBaseUrl}/api/media/kernel-file/:path*`,
       }
     );
   }

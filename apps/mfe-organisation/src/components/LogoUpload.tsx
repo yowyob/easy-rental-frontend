@@ -2,7 +2,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Loader2, UploadCloud, CheckCircle2 } from 'lucide-react';
-import { extraService } from '@pwa-easy-rental/shared-services';
+import { extraService, resolveMediaDisplayUrl } from '@pwa-easy-rental/shared-services';
 
 export const LogoUpload = ({ value, onUploadSuccess, t }: { value: string, onUploadSuccess: (url: string) => void, t: any }) => {
   const [uploading, setUploading] = useState(false);
@@ -44,7 +44,7 @@ export const LogoUpload = ({ value, onUploadSuccess, t }: { value: string, onUpl
     }
   };
 
-  const displayImage = localPreview || value;
+  const displayImage = localPreview || (value ? resolveMediaDisplayUrl(value) : null);
 
   return (
     <div className="space-y-2 group w-full">

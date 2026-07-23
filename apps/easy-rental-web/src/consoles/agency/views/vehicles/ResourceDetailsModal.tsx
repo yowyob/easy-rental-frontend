@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { driverService, vehicleService } from '@pwa-easy-rental/shared-services';
 import { VehicleDetailsBody } from '@pwa-easy-rental/shared-ui';
-import { X, Loader2, DollarSign, Calendar, Clock, MessageSquare, Star } from 'lucide-react';
+import { X, Loader2, DollarSign, Calendar, Clock, MessageSquare, Star, Phone, User, BadgeCheck, FileText, ShieldCheck, Award, IdCard } from 'lucide-react';
 import { formatScheduleDate } from '@pwa-easy-rental/shared-services';
 import { Portal } from '../../components/Portal';
 
@@ -92,6 +92,110 @@ export const ResourceDetailsModal = ({ resourceId, type, onClose, t }: ResourceD
               <VehicleDetailsBody details={details} t={t} />
             ) : (
               <div className="space-y-10">
+                {/* HEADER PROFIL — Photo, identité, contact, statut */}
+                <div className="flex flex-col md:flex-row gap-6 p-6 bg-gradient-to-br from-blue-50/60 to-slate-50/60 dark:from-blue-900/10 dark:to-slate-900/40 rounded-3xl border border-slate-100 dark:border-slate-800">
+                  <div className="relative shrink-0 mx-auto md:mx-0">
+                    <div className="size-32 rounded-3xl overflow-hidden border-4 border-white dark:border-slate-800 shadow-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                      {details.driver?.profilUrl ? (
+                        <img src={details.driver.profilUrl} alt="Profil" className="w-full h-full object-cover" />
+                      ) : (
+                        <User size={40} className="text-slate-300" />
+                      )}
+                    </div>
+                    <div className={`absolute -bottom-2 -right-2 size-8 rounded-2xl border-4 border-white dark:border-[#1a1d2d] flex items-center justify-center ${
+                      details.driver?.status === 'ACTIVE' ? 'bg-green-500' : 'bg-red-500'
+                    }`}>
+                      <ShieldCheck size={14} className="text-white" />
+                    </div>
+                  </div>
+                  <div className="flex-1 space-y-3">
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase italic tracking-widest">
+                        {details.driver?.status === 'ACTIVE'
+                          ? (t.driverStatus?.statusActive || 'Actif')
+                          : (t.driverStatus?.statusInactive || 'Inactif')}
+                      </p>
+                      <h4 className="text-2xl font-black uppercase italic tracking-tighter text-slate-900 dark:text-white">
+                        {details.driver?.firstname} {details.driver?.lastname}
+                      </h4>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      <div className="flex items-center gap-2 font-bold text-slate-600 dark:text-slate-300 italic">
+                        <Phone size={13} className="text-[#0528d6]" /> {details.driver?.tel || '—'}
+                      </div>
+                      <div className="flex items-center gap-2 font-bold text-slate-600 dark:text-slate-300 italic">
+                        <User size={13} className="text-[#0528d6]" />
+                        {details.driver?.age ?? '—'} {t.driverCard?.years || 'ans'} — {details.driver?.gender === 0 ? (t.driverForm?.male || 'H') : (t.driverForm?.female || 'F')}
+                      </div>
+                      <div className="flex items-center gap-2 font-bold text-slate-600 dark:text-slate-300 italic">
+                        <Award size={13} className="text-[#0528d6]" />
+                        {details.driver?.yearsExperience ?? 0} {t.driverForm?.yearsExperience || "années d'expérience"}
+                      </div>
+                      <div className="flex items-center gap-2 font-bold text-slate-600 dark:text-slate-300 italic">
+                        <BadgeCheck size={13} className="text-green-600" />
+                        {t.driverCard?.verifiedLicense || 'Permis vérifié'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* PIECES D'IDENTITE — CNI et Permis */}
+                <section>
+                  <div className="flex items-center gap-3 mb-6 border-b dark:border-slate-800 pb-2">
+                    <IdCard className="text-[#0528d6]" size={18} />
+                    <h5 className="text-sm font-black uppercase tracking-tighter italic">
+                      {t.driverForm?.scanDocs || "Pièces d'identité"}
+                    </h5>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-5 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-3xl">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="size-10 rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-[#0528d6] flex items-center justify-center">
+                          <IdCard size={18} />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-black uppercase italic tracking-widest text-slate-400">
+                            {t.driverForm?.cniNumber || 'CNI'}
+                          </p>
+                          <p className="text-sm font-black italic text-slate-900 dark:text-white">
+                            {details.driver?.cniNumber || '—'}
+                          </p>
+                        </div>
+                      </div>
+                      {details.driver?.cniUrl && (
+                        <a href={details.driver.cniUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-500 hover:text-[#0528d6] rounded-xl text-[10px] font-black uppercase italic tracking-widest">
+                          <FileText size={12} /> {t.driverCard?.cniBtn || 'Voir CNI'}
+                        </a>
+                      )}
+                    </div>
+                    <div className="p-5 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-3xl">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="size-10 rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-[#0528d6] flex items-center justify-center">
+                          <BadgeCheck size={18} />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-black uppercase italic tracking-widest text-slate-400">
+                            {t.driverForm?.licenseNumber || 'Permis'}
+                          </p>
+                          <p className="text-sm font-black italic text-slate-900 dark:text-white">
+                            {details.driver?.licenseNumber || '—'}
+                          </p>
+                          {details.driver?.licenseExpiry && (
+                            <p className="text-[10px] font-bold italic text-slate-400 mt-0.5">
+                              {t.driverForm?.licenseExpiry || 'Expire'} : {details.driver.licenseExpiry}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      {details.driver?.drivingLicenseUrl && (
+                        <a href={details.driver.drivingLicenseUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-500 hover:text-[#0528d6] rounded-xl text-[10px] font-black uppercase italic tracking-widest">
+                          <FileText size={12} /> {t.driverCard?.licenseBtn || 'Voir permis'}
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </section>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border text-center">
                     <p className="text-[9px] font-black text-slate-400 uppercase mb-1 italic">{t.resDetails.globalRating}</p>

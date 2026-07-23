@@ -20,6 +20,7 @@ export const driverService = {
   getDriversByAgency: async (agencyId: string) =>
     mapDriverListResponse(await client.get<any[]>(`/api/drivers/agency/${agencyId}`)),
   createDriver: (orgId: string, formData: FormData) => client.post<any>(`/api/drivers/org/${orgId}`, formData),
+  updateDriver: (id: string, formData: FormData) => client.put<any>(`/api/drivers/${id}`, formData),
   deleteDriver: (id: string) => client.delete(`/api/drivers/${id}`),
   updateDriverPricing: async (id: string, data: { pricePerHour?: number; pricePerDay?: number; pricePerMonth?: number }) => {
     const res = await client.put<any>(`/api/drivers/${id}/pricing`, toApiPricingPayload(data));

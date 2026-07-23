@@ -1,3 +1,4 @@
+import { defaultClient as client } from './api-client';
 import { extraService } from './extra.service';
 import { orgService } from './org.service';
 import { reviewService } from './review.service';
@@ -9,6 +10,10 @@ export const adminService = {
   createPlan: extraService.createPlan,
   updatePlan: extraService.updatePlanQuotas,
   assignPlan: (orgId: string, planName: string) => orgService.assignPlan(orgId, planName),
+  approveOrganization: (orgId: string, reason?: string) =>
+    client.post<Record<string, unknown>>(`/api/admin/organizations/${orgId}/approve`, { reason: reason ?? '' }),
+  rejectOrganization: (orgId: string, reason?: string) =>
+    client.post<Record<string, unknown>>(`/api/admin/organizations/${orgId}/reject`, { reason: reason ?? '' }),
   getSupportConversations: () => supportService.listConversations(),
   getSupportConversationMessages: (params: { email?: string; visitorSessionId?: string }) =>
     supportService.getAdminConversationMessages(params),

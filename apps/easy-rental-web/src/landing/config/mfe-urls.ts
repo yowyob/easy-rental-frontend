@@ -4,4 +4,5 @@ export const MFE_URLS = {
   agency: '/agency',
   organisation: '/organisation',
   admin: '/admin',
+  freelance: '/organisation/freelance-signup',
 };
