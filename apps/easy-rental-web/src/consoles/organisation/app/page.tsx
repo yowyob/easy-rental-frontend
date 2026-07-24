@@ -253,7 +253,7 @@ export default function OrganisationDashboard() {
         t={t}
       />
       <main className="flex-1 flex flex-col overflow-hidden relative">
-        <PlatformFeedbackPrompt feedbackUrl="http://localhost:3000/feedback" />
+        <PlatformFeedbackPrompt feedbackUrl="https://rental.yowyob.com/feedback" />
         <Header 
           title={t.views[currentView as 'DASHBOARD' || 'AGENCIES' || 'ROLES' || 'STAFF' || 'SUBSCRIPTION'] || currentView} 
           setCurrentView={setCurrentView} 

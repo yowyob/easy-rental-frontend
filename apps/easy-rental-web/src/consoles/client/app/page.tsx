@@ -214,7 +214,7 @@ export default function ClientDashboard() {
 
           {isAuth && (
             <div className="w-full px-4 md:px-8 pt-4">
-              <PlatformFeedbackPrompt feedbackUrl="http://localhost:3000/feedback" />
+              <PlatformFeedbackPrompt feedbackUrl="https://rental.yowyob.com/feedback" />
             </div>
           )}
 
@@ -236,7 +236,7 @@ export default function ClientDashboard() {
 
             {currentView === 'NOTIFICATIONS' && <NotificationsView clientId={userData?.id} />}
           </main>
-          <Footer t={t.footer} nav={{ features: t.footer.features }} landingBaseUrl="http://localhost:3000" />
+          <Footer t={t.footer} nav={{ features: t.footer.features }} landingBaseUrl="https://rental.yowyob.com" />
           {isAuth && <SupportChatWidget />}
         </div>
       </div>

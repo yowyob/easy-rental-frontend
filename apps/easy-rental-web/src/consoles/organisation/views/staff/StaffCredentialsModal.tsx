@@ -150,7 +150,7 @@ export function parseInviteCredentials(
   const password = String(payload.temporary_password ?? payload.temporaryPassword ?? '');
   if (!password) return null;
   const agencyUrl = String(
-    payload.agency_login_url ?? payload.agencyLoginUrl ?? 'http://localhost:3002/agency/login'
+    payload.agency_login_url ?? payload.agencyLoginUrl ?? 'https://rental.yowyob.com/agency/login'
   );
   const emailSent = payload.email_sent ?? payload.emailSent;
   if (emailSent === true) return null;
