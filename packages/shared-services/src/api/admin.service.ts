@@ -14,6 +14,10 @@ export const adminService = {
     client.post<Record<string, unknown>>(`/api/admin/organizations/${orgId}/approve`, { reason: reason ?? '' }),
   rejectOrganization: (orgId: string, reason?: string) =>
     client.post<Record<string, unknown>>(`/api/admin/organizations/${orgId}/reject`, { reason: reason ?? '' }),
+  suspendOrganization: (orgId: string, reason?: string) =>
+    client.post<Record<string, unknown>>(`/api/admin/organizations/${orgId}/suspend`, { reason: reason ?? '' }),
+  reactivateOrganization: (orgId: string) =>
+    client.post<Record<string, unknown>>(`/api/admin/organizations/${orgId}/reactivate`, {}),
   getSupportConversations: () => supportService.listConversations(),
   getSupportConversationMessages: (params: { email?: string; visitorSessionId?: string }) =>
     supportService.getAdminConversationMessages(params),

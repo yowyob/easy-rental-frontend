@@ -18,6 +18,26 @@ export const MyBookingsView = ({ userData, onNavigateToCatalog, lang = 'FR' }: {
   const [selectedRental, setSelectedRental] = useState<any>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [reviewTarget, setReviewTarget] = useState<any>(null);
+  const [signalingId, setSignalingId] = useState<string | null>(null);
+
+  const refreshRentals = async () => {
+    const data = await rentalService.getClientRentalsHistory();
+    if (data.ok) setRentals(data.data || []);
+  };
+
+  const handleSignalEnd = async (rentalId: string) => {
+    setSignalingId(rentalId);
+    try {
+      const res = await rentalService.signalEndR2(rentalId);
+      if (res.ok) {
+        await refreshRentals();
+      } else {
+        alert((res.data as any)?.message || 'Signalement impossible.');
+      }
+    } finally {
+      setSignalingId(null);
+    }
+  };
 
   useEffect(() => {
     const fetchRentals = async () => {
@@ -157,7 +177,19 @@ export const MyBookingsView = ({ userData, onNavigateToCatalog, lang = 'FR' }: {
                     <span className="text-[10px] font-bold text-[#0528d6] uppercase tracking-widest inline-flex items-center gap-1">
                       {t.trips.details} <ChevronRight size={12} />
                     </span>
-                    {rental.status === 'COMPLETED' && rental.vehicleId && rental.driverId && (
+                    {rental.status === 'ONGOING' && (
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => { e.stopPropagation(); handleSignalEnd(rental.id); }}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); handleSignalEnd(rental.id); } }}
+                        className="text-[10px] font-black text-purple-600 border border-purple-300 px-3 py-1 rounded-full hover:bg-purple-600 hover:text-white transition-colors uppercase tracking-widest cursor-pointer inline-flex items-center gap-1"
+                      >
+                        {signalingId === rental.id ? <Loader2 size={11} className="animate-spin" /> : null}
+                        Signaler le retour
+                      </span>
+                    )}
+                    {rental.status === 'COMPLETED' && (
                       <span
                         role="button"
                         tabIndex={0}
@@ -223,9 +255,10 @@ export const MyBookingsView = ({ userData, onNavigateToCatalog, lang = 'FR' }: {
           rental={reviewTarget.rental}
           vehicle={reviewTarget.vehicle}
           driver={reviewTarget.driver}
+          agency={reviewTarget.agency}
           authorName={userData?.fullname}
           onClose={() => setReviewTarget(null)}
-          onSubmitted={() => setReviewTarget(null)}
+          onSubmitted={() => { setReviewTarget(null); refreshRentals(); }}
         />
       )}
     </div>

@@ -1,8 +1,8 @@
 'use client';
 import React from 'react';
-import { Building2, CreditCard, LogOut, MessageSquare, Shield, Star, X, ChevronRight, Activity } from 'lucide-react';
+import { Building2, CreditCard, LogOut, MessageSquare, MessagesSquare, Shield, Star, X, ChevronRight, Activity, BarChart3, ScrollText } from 'lucide-react';
 
-export type AdminTab = 'ORGS' | 'PLANS' | 'MESSAGES' | 'REVIEWS';
+export type AdminTab = 'STATS' | 'ORGS' | 'PLANS' | 'BILLING' | 'MESSAGES' | 'CHAT' | 'REVIEWS' | 'AUDIT';
 
 type AdminSidebarProps = {
   tab: AdminTab;
@@ -62,6 +62,12 @@ export const AdminSidebar = ({
           </p>
           <div className="space-y-1">
             <SidebarItem
+              icon={<BarChart3 size={20} />}
+              label="Statistiques"
+              active={tab === 'STATS'}
+              onClick={() => { setTab('STATS'); setSidebarOpen(false); }}
+            />
+            <SidebarItem
               icon={<Building2 size={20} />}
               label="Organisations"
               active={tab === 'ORGS'}
@@ -74,6 +80,12 @@ export const AdminSidebar = ({
               onClick={() => { setTab('PLANS'); setSidebarOpen(false); }}
             />
             <SidebarItem
+              icon={<CreditCard size={20} />}
+              label="Facturation"
+              active={tab === 'BILLING'}
+              onClick={() => { setTab('BILLING'); setSidebarOpen(false); }}
+            />
+            <SidebarItem
               icon={<MessageSquare size={20} />}
               label="Messages"
               active={tab === 'MESSAGES'}
@@ -81,11 +93,23 @@ export const AdminSidebar = ({
               onClick={() => { setTab('MESSAGES'); setSidebarOpen(false); }}
             />
             <SidebarItem
+              icon={<MessagesSquare size={20} />}
+              label="Messagerie (audit)"
+              active={tab === 'CHAT'}
+              onClick={() => { setTab('CHAT'); setSidebarOpen(false); }}
+            />
+            <SidebarItem
               icon={<Star size={20} />}
               label="Avis"
               active={tab === 'REVIEWS'}
               badge={pendingReviews > 0 ? pendingReviews : undefined}
               onClick={() => { setTab('REVIEWS'); setSidebarOpen(false); }}
+            />
+            <SidebarItem
+              icon={<ScrollText size={20} />}
+              label="Journal"
+              active={tab === 'AUDIT'}
+              onClick={() => { setTab('AUDIT'); setSidebarOpen(false); }}
             />
           </div>
         </div>

@@ -16,6 +16,7 @@ export const en = {
     marketplace: "Marketplace",
     myRentals: "My rentals",
     reservations: "Bookings",
+    messages: "Messages",
     notifications: "Notifications",
     install: "Install app",
     logout: "Logout",

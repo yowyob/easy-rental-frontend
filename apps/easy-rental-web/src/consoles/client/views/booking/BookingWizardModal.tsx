@@ -14,10 +14,12 @@ import {
   MapPin,
   Mail,
   Store,
+  Gift,
 } from 'lucide-react';
 import {
   rentalService,
   driverService,
+  loyaltyService,
   normalizeCmPhone,
   isValidCmMobile,
   CM_PHONE_HINT,
@@ -57,6 +59,31 @@ export const BookingWizardModal = ({
   const [initRes, setInitRes] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [outstandingDebt, setOutstandingDebt] = useState(0);
+  const [pointsBalance, setPointsBalance] = useState(0);
+  const [useRedeem, setUseRedeem] = useState(false);
+  const [redeemPoints, setRedeemPoints] = useState(0);
+
+  useEffect(() => {
+    const clientId = userData?.id;
+    const agencyId = vehicle?.agencyId;
+    if (!clientId || !agencyId) return;
+    let cancelled = false;
+    rentalService.getClientDebtForAgency(clientId, agencyId).then((r: any) => {
+      if (!cancelled && r.ok) setOutstandingDebt(r.debt || 0);
+    });
+    return () => { cancelled = true; };
+  }, [userData?.id, vehicle?.agencyId]);
+
+  useEffect(() => {
+    const clientId = userData?.id;
+    if (!clientId) return;
+    let cancelled = false;
+    loyaltyService.getBalance(clientId).then((r: any) => {
+      if (!cancelled && r.ok && r.data) setPointsBalance(Number(r.data.balance) || 0);
+    });
+    return () => { cancelled = true; };
+  }, [userData?.id]);
 
   const [form, setForm] = useState({
     vehicleId: vehicle.id,
@@ -79,6 +106,7 @@ export const BookingWizardModal = ({
     // No quote / billing preview for a start date already in the past
     if (start.getTime() < Date.now() - 60_000) return null;
     if (rentalPeriodOverlapsSchedule(form.startDate, form.endDate, schedule)) return null;
+    const depositPct = Number(agency?.depositPercentage);
     return computeRentalQuote(
       {
         startDate: start,
@@ -86,10 +114,11 @@ export const BookingWizardModal = ({
         rentalType: form.rentalType,
         vehiclePricing: vehiclePricing ?? { pricePerHour: 0, pricePerDay: 0, pricePerMonth: 0 },
         driverPricing: resolvePricingRates(selectedDriver?.pricing),
+        cautionRate: Number.isFinite(depositPct) && depositPct > 0 ? depositPct / 100 : null,
       },
       true
     );
-  }, [form, vehicle, selectedDriver, schedule]);
+  }, [form, vehicle, selectedDriver, schedule, agency]);
 
   const missingPrereqs = useMemo(() => {
     const items: { id: string; message: string }[] = [];
@@ -163,7 +192,8 @@ export const BookingWizardModal = ({
     setLoading(true);
     setError(null);
     try {
-      const res = await rentalService.initiateRental(form);
+      const effectiveRedeem = useRedeem ? Math.max(0, Math.min(redeemPoints, pointsBalance)) : 0;
+      const res = await rentalService.initiateRental({ ...form, redeemPoints: effectiveRedeem });
       if (res.ok && res.data?.isAllowed) {
         setInitRes(res.data);
         setPhase('success');
@@ -332,29 +362,134 @@ export const BookingWizardModal = ({
                       <DateTimePicker label="Retour" value={form.endDate} onChange={(v) => { setForm({ ...form, endDate: v }); setError(null); }} required />
                     </div>
 
+                    {/* Indisponibilités du véhicule (déjà réservé / maintenance) */}
+                    {(() => {
+                      const blocks = (schedule || [])
+                        .filter((b: any) => ['RENTED', 'MAINTENANCE', 'UNAVAILABLE', 'RESERVED'].includes(String(b.status ?? '').toUpperCase()))
+                        .filter((b: any) => b.startDate && b.endDate && new Date(b.endDate).getTime() >= Date.now())
+                        .sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+                      if (blocks.length === 0) return null;
+                      return (
+                        <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30">
+                          <p className="text-[10px] font-black uppercase italic tracking-widest text-amber-700 mb-2">
+                            Véhicule indisponible sur ces périodes
+                          </p>
+                          <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                            {blocks.map((b: any, i: number) => (
+                              <div key={i} className="flex items-center justify-between text-[11px] font-bold text-amber-800 dark:text-amber-300">
+                                <span>
+                                  {new Date(b.startDate).toLocaleDateString('fr-FR')} → {new Date(b.endDate).toLocaleDateString('fr-FR')}
+                                </span>
+                                <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/40">
+                                  {String(b.status).toUpperCase() === 'MAINTENANCE' ? 'Maintenance' : 'Réservé'}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
+
                     <div className="p-6 bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-200 rounded-2xl space-y-4">
-                      <div className="flex justify-between text-slate-500 text-sm">
-                        <span className="flex items-center gap-2 text-[10px] font-bold uppercase"><Clock size={12} /> Durée</span>
-                        <span className="font-bold">{quote?.billedUnits ?? 0} {quote?.unitLabel ?? ''}</span>
+                      {/* Tarifs indicatifs (toujours visibles) */}
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        {(['HOURLY', 'DAILY', 'MONTHLY'] as const).map((mode) => {
+                          const r = getPricingRate(vehicle?.pricing, mode);
+                          const lbl = mode === 'HOURLY' ? '/heure' : mode === 'DAILY' ? '/jour' : '/mois';
+                          return (
+                            <div key={mode} className={`p-2 rounded-xl border ${form.rentalType === mode ? 'border-[#0528d6] bg-blue-50 dark:bg-blue-900/20' : 'border-slate-200 dark:border-slate-800'}`}>
+                              <div className="text-[8px] font-black uppercase text-slate-400">{lbl}</div>
+                              <div className="text-xs font-black text-slate-700 dark:text-slate-200">{r != null ? `${r.toLocaleString('fr-FR')}` : '—'}</div>
+                            </div>
+                          );
+                        })}
                       </div>
 
-                      {quote && (
-                        <div className="text-xs space-y-1.5 border-b border-slate-200 pb-3">
-                          <div className="flex justify-between"><span>Tarif véhicule</span><span>{quote.vehicleBaseAmount.toLocaleString('fr-FR')} XAF</span></div>
-                          {quote.driverBaseAmount > 0 && (
-                            <div className="flex justify-between"><span>Tarif chauffeur</span><span>{quote.driverBaseAmount.toLocaleString('fr-FR')} XAF</span></div>
+                      {!quote || !quote.valid ? (
+                        <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 text-[11px] font-bold italic text-amber-700 text-center">
+                          Choisissez une période valide (le retour doit être après le départ) pour voir le tarif.
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex justify-between text-slate-500 text-sm">
+                            <span className="flex items-center gap-2 text-[10px] font-bold uppercase"><Clock size={12} /> Facturé</span>
+                            <span className="font-bold">{quote.billedLabel}</span>
+                          </div>
+
+                          <div className="text-xs space-y-1.5 border-b border-slate-200 pb-3">
+                            <div className="flex justify-between"><span>Tarif véhicule</span><span>{Math.round(quote.vehicleBaseAmount).toLocaleString('fr-FR')} XAF</span></div>
+                            {quote.driverBaseAmount > 0 && (
+                              <div className="flex justify-between"><span>Tarif chauffeur</span><span>{Math.round(quote.driverBaseAmount).toLocaleString('fr-FR')} XAF</span></div>
+                            )}
+                            <div className="flex justify-between text-slate-400"><span>Caution (restituée au retour)</span><span>{Math.round(quote.caution).toLocaleString('fr-FR')} XAF</span></div>
+                            <div className="flex justify-between font-bold"><span>Total dossier</span><span>{Math.round(quote.total).toLocaleString('fr-FR')} XAF</span></div>
+                          </div>
+
+                          {pointsBalance > 0 && (
+                            <div className="p-4 rounded-2xl bg-amber-50/60 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 space-y-3">
+                              <label className="flex items-center justify-between gap-3 cursor-pointer">
+                                <span className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-amber-700">
+                                  <Gift size={14} /> Utiliser mes points (solde: {pointsBalance.toLocaleString('fr-FR')})
+                                </span>
+                                <input
+                                  type="checkbox"
+                                  checked={useRedeem}
+                                  onChange={(e) => {
+                                    setUseRedeem(e.target.checked);
+                                    if (!e.target.checked) setRedeemPoints(0);
+                                  }}
+                                  className="size-4 accent-[#0528d6]"
+                                />
+                              </label>
+                              {useRedeem && (
+                                <div className="space-y-2">
+                                  <input
+                                    type="range"
+                                    min={0}
+                                    max={pointsBalance}
+                                    value={redeemPoints}
+                                    onChange={(e) => setRedeemPoints(Number(e.target.value))}
+                                    className="w-full accent-[#0528d6]"
+                                  />
+                                  <div className="flex items-center justify-between text-[11px]">
+                                    <input
+                                      type="number"
+                                      min={0}
+                                      max={pointsBalance}
+                                      value={redeemPoints}
+                                      onChange={(e) => {
+                                        const v = Number(e.target.value);
+                                        setRedeemPoints(Number.isFinite(v) ? Math.max(0, Math.min(v, pointsBalance)) : 0);
+                                      }}
+                                      className="w-20 p-1.5 text-center bg-white dark:bg-slate-900 border border-amber-200 rounded-lg text-xs font-bold outline-none"
+                                    />
+                                    <span className="font-bold text-amber-700">
+                                      Remise: {(redeemPoints * 10).toLocaleString('fr-FR')} XAF
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           )}
-                          <div className="flex justify-between font-bold"><span>Total dossier</span><span>{quote.total.toLocaleString('fr-FR')} XAF</span></div>
-                        </div>
-                      )}
 
-                      <div className="flex justify-between items-center p-4 bg-[#0528d6] rounded-2xl text-white">
-                        <div>
-                          <p className="text-[9px] font-bold uppercase opacity-80">Acompte estimé (60 %) — à régler en agence</p>
-                          <p className="text-2xl font-bold mt-1">{estimatedDeposit.toLocaleString('fr-FR')} XAF</p>
-                        </div>
-                        <Calculator size={28} className="opacity-30" />
-                      </div>
+                          {outstandingDebt > 0 && (
+                            <div className="flex justify-between items-center p-3 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-100 text-red-600">
+                              <span className="text-[10px] font-black uppercase italic tracking-widest">Dette antérieure à régler</span>
+                              <span className="text-sm font-black italic">+ {Math.round(outstandingDebt).toLocaleString('fr-FR')} XAF</span>
+                            </div>
+                          )}
+
+                          <div className="flex justify-between items-center p-4 bg-[#0528d6] rounded-2xl text-white">
+                            <div>
+                              <p className="text-[9px] font-bold uppercase opacity-80">
+                                {outstandingDebt > 0 ? 'À régler en agence (acompte 60 % + dette)' : 'Acompte estimé (60 %) — à régler en agence'}
+                              </p>
+                              <p className="text-2xl font-bold mt-1">{Math.round(estimatedDeposit + outstandingDebt).toLocaleString('fr-FR')} XAF</p>
+                            </div>
+                            <Calculator size={28} className="opacity-30" />
+                          </div>
+                        </>
+                      )}
 
                       <p className="text-[10px] text-slate-500 leading-relaxed">
                         Le paiement en ligne arrive bientôt. Pour l&apos;instant, l&apos;agence vous contactera pour confirmer la réservation.
@@ -377,6 +512,11 @@ export const BookingWizardModal = ({
                     et régler l&apos;acompte de{' '}
                     <strong>{estimatedDeposit.toLocaleString('fr-FR')} XAF</strong>.
                   </p>
+                  {Number(initRes?.loyaltyDiscount) > 0 && (
+                    <p className="text-xs font-black text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-4 py-2.5 inline-flex items-center gap-2">
+                      <Gift size={14} /> Remise fidélité: −{Number(initRes.loyaltyDiscount).toLocaleString('fr-FR')} XAF
+                    </p>
+                  )}
                 </div>
 
                 {contactAgency && (

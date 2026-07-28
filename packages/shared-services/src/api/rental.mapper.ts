@@ -14,6 +14,7 @@ export function toApiRentalInitPayload(data: Record<string, unknown>): Record<st
     end_date: data.endDate ?? data.end_date,
     rental_type: data.rentalType ?? data.rental_type,
     client_phone: data.clientPhone ?? data.client_phone,
+    redeem_points: data.redeemPoints ?? data.redeem_points ?? undefined,
   };
 }
 
@@ -59,6 +60,19 @@ export function normalizeRentalRecord(raw: Record<string, unknown> | null | unde
     depositAmount: raw.depositAmount ?? raw.deposit_amount,
     licencePlate: raw.licencePlate ?? raw.licence_plate,
     status: raw.status,
+    // Champs R2 (caution / inspection / tracking)
+    rentalAmount: raw.rentalAmount ?? raw.rental_amount,
+    cautionAmount: raw.cautionAmount ?? raw.caution_amount,
+    rentalAmountPaid: raw.rentalAmountPaid ?? raw.rental_amount_paid,
+    cautionAmountPaid: raw.cautionAmountPaid ?? raw.caution_amount_paid,
+    cautionHeld: raw.cautionHeld ?? raw.caution_held,
+    cautionDeducted: raw.cautionDeducted ?? raw.caution_deducted,
+    cautionRefunded: raw.cautionRefunded ?? raw.caution_refunded,
+    supplementDue: raw.supplementDue ?? raw.supplement_due,
+    requestedUpfront: raw.requestedUpfront ?? raw.requested_upfront,
+    startOdometer: raw.startOdometer ?? raw.start_odometer,
+    endOdometer: raw.endOdometer ?? raw.end_odometer,
+    trackedKm: raw.trackedKm ?? raw.tracked_km,
     createdAt: raw.createdAt ?? raw.created_at,
     updatedAt: raw.updatedAt ?? raw.updated_at,
   };
@@ -95,6 +109,7 @@ export function normalizeRentalInitResponse(raw: Record<string, unknown> | null 
     depositAmount: raw.depositAmount ?? raw.deposit_amount,
     commissionAmount: raw.commissionAmount ?? raw.commission_amount,
     isAllowed: raw.isAllowed ?? raw.is_allowed,
+    loyaltyDiscount: raw.loyaltyDiscount ?? raw.loyalty_discount,
     message: raw.message,
     agency: agencyRaw ? normalizeAgency(agencyRaw) : null,
   };

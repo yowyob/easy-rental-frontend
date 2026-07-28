@@ -21,6 +21,12 @@ export const AgencyCard = ({ agency, onClick }: AgencyCardProps) => {
     >
       {/* Badges */}
       <div className="absolute top-6 right-6 flex flex-col gap-2 items-end">
+        {(agency.organizationAccountType === 'FREELANCE' || agency.organization_account_type === 'FREELANCE') && (
+          <span className="px-3 py-1 bg-amber-50 dark:bg-amber-500/10 text-amber-700 text-[9px] font-black rounded-full border border-amber-100">
+            Particulier
+          </span>
+        )}
+
         {agency.is24Hours && (
           <span className="px-3 py-1 bg-green-50 dark:bg-green-500/10 text-green-600 text-[9px] font-black  rounded-full border border-green-100">
             24h/24

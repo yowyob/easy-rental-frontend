@@ -18,21 +18,91 @@ export type RentalQuoteInput = {
   rentalType: RentalType;
   vehiclePricing: PricingRates;
   driverPricing?: PricingRates | null;
+  /** Taux de caution en fraction (ex 0.30 pour 30%). Défaut = DEPOSIT_RATE (0.10). */
+  cautionRate?: number | null;
 };
 
 export type RentalQuote = {
   billedUnits: number;
   unitLabel: 'h' | 'j' | 'mois';
+  /** Détail lisible de la facturation en cascade, ex. "2 jours + 3 h". */
+  billedLabel: string;
+  /** false si la période est nulle/inversée — dans ce cas ne pas afficher de prix. */
+  valid: boolean;
   vehicleBaseAmount: number;
   driverBaseAmount: number;
   baseAmount: number;
   commission: number;
   deposit: number;
+  /** Alias R2 de `deposit` — montant de la caution (escrow). */
+  caution: number;
   total: number;
   requestedDeposit: number;
   savingsVsHourly: number;
   hourlyEquivalent: number;
 };
+
+/** Résultat détaillé de la facturation en cascade. */
+type CascadeResult = { amount: number; label: string };
+
+/**
+ * Facturation en cascade (miroir de RentalDurationCalculator.computeBaseAmount côté backend).
+ * @param combinedRates tarifs véhicule+chauffeur additionnés {hour, day, month}
+ */
+function computeCascade(
+  start: Date,
+  end: Date,
+  type: RentalType,
+  rates: { hour: number; day: number; month: number },
+): CascadeResult {
+  const ms = end.getTime() - start.getTime();
+  const totalHours = ms / (1000 * 60 * 60);
+
+  if (type === 'HOURLY') {
+    const h = Math.max(1, Math.ceil(totalHours));
+    return { amount: h * rates.hour, label: `${h} h` };
+  }
+
+  if (type === 'DAILY') {
+    const fullDays = Math.floor(totalHours / 24);
+    if (fullDays === 0) return { amount: rates.day, label: '1 jour (min)' };
+    const remHours = Math.floor(totalHours - fullDays * 24);
+    const extraHours = remHours > DAILY_GRACE_HOURS ? remHours - DAILY_GRACE_HOURS : 0;
+    const amount = fullDays * rates.day + extraHours * rates.hour;
+    const label = extraHours > 0 ? `${fullDays} jours + ${extraHours} h` : `${fullDays} jour${fullDays > 1 ? 's' : ''}`;
+    return { amount, label };
+  }
+
+  // MONTHLY
+  const fullMonths = fullCalendarMonths(start, end);
+  if (fullMonths === 0) return { amount: rates.month, label: '1 mois (min)' };
+  const anchor = new Date(start);
+  anchor.setMonth(anchor.getMonth() + fullMonths);
+  const remMs = end.getTime() - anchor.getTime();
+  const remTotalHours = remMs / (1000 * 60 * 60);
+  const remDays = Math.floor(remTotalHours / 24);
+  const remHours = Math.floor(remTotalHours - remDays * 24);
+  const extraDays = remDays > MONTHLY_GRACE_DAYS ? remDays - MONTHLY_GRACE_DAYS : 0;
+  const extraHours = remHours > DAILY_GRACE_HOURS ? remHours - DAILY_GRACE_HOURS : 0;
+  const amount = fullMonths * rates.month + extraDays * rates.day + extraHours * rates.hour;
+  const parts = [`${fullMonths} mois`];
+  if (extraDays > 0) parts.push(`${extraDays} j`);
+  if (extraHours > 0) parts.push(`${extraHours} h`);
+  return { amount, label: parts.join(' + ') };
+}
+
+/** Nombre de mois calendaires complets entre start et end. */
+export function fullCalendarMonths(start: Date, end: Date): number {
+  let months = 0;
+  const probe = new Date(start);
+  probe.setMonth(probe.getMonth() + 1);
+  while (probe.getTime() <= end.getTime()) {
+    months++;
+    probe.setTime(start.getTime());
+    probe.setMonth(start.getMonth() + months + 1);
+  }
+  return months;
+}
 
 function diffMs(start: Date, end: Date): number {
   return Math.max(0, end.getTime() - start.getTime());
@@ -101,30 +171,48 @@ export function computeRentalQuote(input: RentalQuoteInput, reservationMode = tr
   };
   const driverPricing = input.driverPricing ? resolvePricingRates(input.driverPricing) : null;
   const units = billedUnitsForType(startDate, endDate, rentalType);
-  const vRate = rateForType(vehiclePricing, rentalType);
-  const dRate = driverPricing ? rateForType(driverPricing, rentalType) : 0;
-  const vehicleBaseAmount = units * vRate;
-  const driverBaseAmount = units * dRate;
-  const baseAmount = vehicleBaseAmount + driverBaseAmount;
+
+  // Période invalide (fin ≤ début) → pas de prix affiché.
+  const valid = endDate.getTime() > startDate.getTime();
+
+  const rates = {
+    hour: rateForType(vehiclePricing, 'HOURLY') + (driverPricing ? rateForType(driverPricing, 'HOURLY') : 0),
+    day: rateForType(vehiclePricing, 'DAILY') + (driverPricing ? rateForType(driverPricing, 'DAILY') : 0),
+    month: rateForType(vehiclePricing, 'MONTHLY') + (driverPricing ? rateForType(driverPricing, 'MONTHLY') : 0),
+  };
+
+  const cascade = computeCascade(startDate, endDate, rentalType, rates);
+  const baseAmount = cascade.amount;
+  // Répartition véhicule/chauffeur au prorata des tarifs de l'unité choisie.
+  const vRateUnit = rateForType(vehiclePricing, rentalType);
+  const dRateUnit = driverPricing ? rateForType(driverPricing, rentalType) : 0;
+  const unitTotal = vRateUnit + dRateUnit;
+  const vehicleBaseAmount = unitTotal > 0 ? baseAmount * (vRateUnit / unitTotal) : baseAmount;
+  const driverBaseAmount = baseAmount - vehicleBaseAmount;
 
   const hours = billableHours(startDate, endDate);
-  const hourlyBase =
-    hours * (rateForType(vehiclePricing, 'HOURLY') + (driverPricing ? rateForType(driverPricing, 'HOURLY') : 0));
+  const hourlyBase = hours * rates.hour;
   const savingsVsHourly = Math.max(0, hourlyBase - baseAmount);
 
   const commission = baseAmount * PLATFORM_COMMISSION_RATE;
-  const deposit = baseAmount * DEPOSIT_RATE;
+  // R2 : caution = base × taux caution agence (fallback 10%). Incluse dans le total.
+  const cautionRate = input.cautionRate != null && input.cautionRate >= 0 ? input.cautionRate : DEPOSIT_RATE;
+  const deposit = baseAmount * cautionRate;
   const total = baseAmount + commission + deposit;
+  // R2 : acompte = 60% du total (caution incluse).
   const requestedDeposit = reservationMode ? total * RESERVATION_DEPOSIT_RATE : total;
 
   return {
     billedUnits: units,
     unitLabel: unitLabel(rentalType),
+    billedLabel: cascade.label,
+    valid,
     vehicleBaseAmount,
     driverBaseAmount,
     baseAmount,
     commission,
     deposit,
+    caution: deposit,
     total,
     requestedDeposit,
     savingsVsHourly,

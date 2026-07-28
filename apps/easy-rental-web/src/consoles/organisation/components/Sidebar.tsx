@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 import React from 'react';
-import { 
-  LayoutDashboard, Store, CreditCard, 
+import {
+  LayoutDashboard, Store, CreditCard,
   Download, LogOut, X, ShieldCheck, UserCircle,
   ChevronRight, Activity, Car, LayoutGrid, CalendarDays,
-  CalendarCheck, Banknote
+  CalendarCheck, Banknote, Users, ArrowUpCircle
 } from 'lucide-react';
 
 export const Sidebar = ({
@@ -40,33 +40,49 @@ export const Sidebar = ({
       </div>
 
       <nav className="flex-1 overflow-y-auto no-scrollbar px-4 space-y-8 pb-8 text-left">
-        <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 px-2 italic">{t.sidebar.hub}</p>
-          <div className="space-y-1">
-            <SidebarItem icon={<LayoutDashboard size={20}/>} label={t.sidebar.dashboard} active={currentView === 'DASHBOARD'} onClick={() => {setCurrentView('DASHBOARD'); setSidebarOpen(false);}} />
-            <SidebarItem icon={<CalendarDays size={20}/>} label={t.sidebar.reservations} active={currentView === 'RESERVATIONS'} onClick={() => {setCurrentView('RESERVATIONS'); setSidebarOpen(false);}} />
-            <SidebarItem icon={<CalendarCheck size={20}/>} label={t.sidebar.rentals} active={currentView === 'RENTALS'} onClick={() => {setCurrentView('RENTALS'); setSidebarOpen(false);}} />
-            <SidebarItem icon={<Banknote size={20}/>} label={t.sidebar.transactions} active={currentView === 'TRANSACTIONS'} onClick={() => {setCurrentView('TRANSACTIONS'); setSidebarOpen(false);}} />
-            {!isFreelance && (
-              <SidebarItem icon={<Store size={20}/>} label={t.sidebar.agencies} active={currentView === 'AGENCIES'} onClick={() => {setCurrentView('AGENCIES'); setSidebarOpen(false);}} />
-            )}
+        {isFreelance ? (
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 px-2 italic">{t.sidebar.hub}</p>
+            <div className="space-y-1">
+              <SidebarItem icon={<LayoutDashboard size={20}/>} label={t.sidebar.dashboard} active={currentView === 'DASHBOARD'} onClick={() => {setCurrentView('DASHBOARD'); setSidebarOpen(false);}} />
+              <SidebarItem icon={<Car size={20}/>} label={t.sidebar.vehicles} active={currentView === 'VEHICLES'} onClick={() => {setCurrentView('VEHICLES'); setSidebarOpen(false);}} />
+              <SidebarItem icon={<Users size={20}/>} label={t.sidebar.drivers} active={currentView === 'DRIVERS'} onClick={() => {setCurrentView('DRIVERS'); setSidebarOpen(false);}} />
+              <SidebarItem icon={<CalendarDays size={20}/>} label={t.sidebar.reservations} active={currentView === 'RESERVATIONS'} onClick={() => {setCurrentView('RESERVATIONS'); setSidebarOpen(false);}} />
+              <SidebarItem icon={<CalendarCheck size={20}/>} label={t.sidebar.rentals} active={currentView === 'RENTALS'} onClick={() => {setCurrentView('RENTALS'); setSidebarOpen(false);}} />
+              <SidebarItem icon={<Banknote size={20}/>} label={t.sidebar.transactions} active={currentView === 'TRANSACTIONS'} onClick={() => {setCurrentView('TRANSACTIONS'); setSidebarOpen(false);}} />
+            </div>
+            <div className="my-6 border-t border-slate-200 dark:border-slate-800" />
+            <div className="space-y-1">
+              <SidebarItem icon={<CreditCard size={20}/>} label={t.sidebar.subscription} active={currentView === 'SUBSCRIPTION'} onClick={() => {setCurrentView('SUBSCRIPTION'); setSidebarOpen(false);}} />
+              <SidebarItem icon={<ArrowUpCircle size={20}/>} label={t.sidebar.upgrade} active={currentView === 'UPGRADE'} onClick={() => {setCurrentView('UPGRADE'); setSidebarOpen(false);}} />
+              <SidebarItem icon={<UserCircle size={20}/>} label={t.sidebar.profile} active={currentView === 'PROFILE'} onClick={() => {setCurrentView('PROFILE'); setSidebarOpen(false);}} />
+            </div>
           </div>
-        </div>
+        ) : (
+          <>
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 px-2 italic">{t.sidebar.hub}</p>
+              <div className="space-y-1">
+                <SidebarItem icon={<LayoutDashboard size={20}/>} label={t.sidebar.dashboard} active={currentView === 'DASHBOARD'} onClick={() => {setCurrentView('DASHBOARD'); setSidebarOpen(false);}} />
+                <SidebarItem icon={<CalendarDays size={20}/>} label={t.sidebar.reservations} active={currentView === 'RESERVATIONS'} onClick={() => {setCurrentView('RESERVATIONS'); setSidebarOpen(false);}} />
+                <SidebarItem icon={<CalendarCheck size={20}/>} label={t.sidebar.rentals} active={currentView === 'RENTALS'} onClick={() => {setCurrentView('RENTALS'); setSidebarOpen(false);}} />
+                <SidebarItem icon={<Banknote size={20}/>} label={t.sidebar.transactions} active={currentView === 'TRANSACTIONS'} onClick={() => {setCurrentView('TRANSACTIONS'); setSidebarOpen(false);}} />
+                <SidebarItem icon={<Store size={20}/>} label={t.sidebar.agencies} active={currentView === 'AGENCIES'} onClick={() => {setCurrentView('AGENCIES'); setSidebarOpen(false);}} />
+              </div>
+            </div>
 
-        <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 px-2 italic">{t.sidebar.network}</p>
-          <div className="space-y-1">
-            {!isFreelance && (
-              <>
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 px-2 italic">{t.sidebar.network}</p>
+              <div className="space-y-1">
                 <SidebarItem icon={<ShieldCheck size={20}/>} label={t.sidebar.roles} active={currentView === 'ROLES'} onClick={() => {setCurrentView('ROLES'); setSidebarOpen(false);}} />
                 <SidebarItem icon={<UserCircle size={20}/>} label={t.sidebar.staff} active={currentView === 'STAFF'} onClick={() => {setCurrentView('STAFF'); setSidebarOpen(false);}} />
                 <SidebarItem icon={<LayoutGrid size={20}/>} label={t.sidebar.categories} active={currentView === 'CATEGORIES'} onClick={() => {setCurrentView('CATEGORIES'); setSidebarOpen(false);}} />
-              </>
-            )}
-            <SidebarItem icon={<Car size={20}/>} label={t.sidebar.vehicles} active={currentView === 'VEHICLES'} onClick={() => {setCurrentView('VEHICLES'); setSidebarOpen(false);}} />
-            <SidebarItem icon={<CreditCard size={20}/>} label={t.sidebar.subscription} active={currentView === 'SUBSCRIPTION'} onClick={() => {setCurrentView('SUBSCRIPTION'); setSidebarOpen(false);}} />
-          </div>
-        </div>
+                <SidebarItem icon={<Car size={20}/>} label={t.sidebar.vehicles} active={currentView === 'VEHICLES'} onClick={() => {setCurrentView('VEHICLES'); setSidebarOpen(false);}} />
+                <SidebarItem icon={<CreditCard size={20}/>} label={t.sidebar.subscription} active={currentView === 'SUBSCRIPTION'} onClick={() => {setCurrentView('SUBSCRIPTION'); setSidebarOpen(false);}} />
+              </div>
+            </div>
+          </>
+        )}
       </nav>
 
       <div className="flex-shrink-0 mt-auto p-4 border-t border-slate-200 dark:border-slate-800 space-y-2">

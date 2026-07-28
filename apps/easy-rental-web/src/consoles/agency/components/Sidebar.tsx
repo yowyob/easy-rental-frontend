@@ -2,9 +2,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 import React from 'react';
-import { 
-  LayoutDashboard, Car, Users, 
-  LogOut, X, ChevronRight, Activity, CalendarDays, CalendarCheck, Banknote
+import {
+  LayoutDashboard, Car, Users,
+  LogOut, X, ChevronRight, Activity, CalendarDays, CalendarCheck, Banknote, ClipboardCheck, MessageSquare
 } from 'lucide-react';
 import { hasPermission } from '@/consoles/agency/utils/permissions';
 
@@ -68,12 +68,14 @@ export const Sidebar = ({
               <>
                 <SidebarItem icon={<CalendarDays size={20}/>} label={t.sidebar.reservations} active={currentView === 'RESERVATIONS'} onClick={() => { setCurrentView('RESERVATIONS'); setSidebarOpen(false); }} />
                 <SidebarItem icon={<CalendarCheck size={20}/>} label={t.sidebar.rentals} active={currentView === 'RENTALS'} onClick={() => { setCurrentView('RENTALS'); setSidebarOpen(false); }} />
+                <SidebarItem icon={<ClipboardCheck size={20}/>} label={t.sidebar.inspections || 'Inspections'} active={currentView === 'INSPECTIONS'} onClick={() => { setCurrentView('INSPECTIONS'); setSidebarOpen(false); }} />
               </>
             )}
             
             {hasPermission(userData, staffPermissions, 'finance:transactions') && (
                 <SidebarItem icon={<Banknote size={20}/>} label={t.sidebar.transactions} active={currentView === 'TRANSACTIONS'} onClick={() => { setCurrentView('TRANSACTIONS'); setSidebarOpen(false); }} />
             )}
+            <SidebarItem icon={<MessageSquare size={20}/>} label={t.sidebar.messages || 'Messages'} active={currentView === 'MESSAGES'} onClick={() => { setCurrentView('MESSAGES'); setSidebarOpen(false); }} />
           </div>
         </div>
 

@@ -1,16 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { Navigation, Globe, Zap, Car } from 'lucide-react';
-import { ArrowLeft, MapPin, Phone, Mail, Clock, CreditCard, Loader2, Store } from 'lucide-react';
+import { ArrowLeft, MapPin, Phone, Mail, Clock, CreditCard, Loader2, Store, MessageSquare, X } from 'lucide-react';
 import { agencyService, vehicleService } from '@pwa-easy-rental/shared-services';
 import { VehicleCard } from './catalog/VehicleCard';
 import { VehicleDetailsView } from './VehicleDetailsView';
+import { ChatPanel } from '../../shared-chat/ChatPanel';
 
-export const AgencyDetailsView = ({ agencyId, userData, onBack }: { agencyId: string, userData: any, onBack: () => void }) => {
+export const AgencyDetailsView = ({ agencyId, userData, onBack, onContactAgency }: { agencyId: string, userData: any, onBack: () => void, onContactAgency?: (agencyId: string) => void }) => {
   const [agency, setAgency] = useState<any>(null);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showChat, setShowChat] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -53,10 +55,51 @@ export const AgencyDetailsView = ({ agencyId, userData, onBack }: { agencyId: st
           <ArrowLeft size={20} />
         </button>
         <div>
-          <h2 className="text-3xl font-black  italic text-slate-900 dark:text-white leading-none">{agency?.name}</h2>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="text-3xl font-black  italic text-slate-900 dark:text-white leading-none">{agency?.name}</h2>
+            {(agency?.organizationAccountType === 'FREELANCE' || agency?.organization_account_type === 'FREELANCE') && (
+              <span className="px-2.5 py-1 bg-amber-50 dark:bg-amber-500/10 text-amber-700 text-[9px] font-black rounded-full border border-amber-100">
+                Particulier
+              </span>
+            )}
+          </div>
           <p className="text-[10px] font-black text-slate-400 tracking-[0.2em] mt-2">{"Détails de l'agence "}</p>
         </div>
+        <button
+          type="button"
+          onClick={() => (onContactAgency ? onContactAgency(agencyId) : setShowChat(true))}
+          className="ml-auto flex items-center gap-2 px-5 py-3 bg-[#0528d6] text-white text-xs font-black rounded-xl hover:opacity-90 transition shadow-lg shadow-blue-600/20"
+        >
+          <MessageSquare size={16} />
+          Contacter l&apos;agence
+        </button>
       </div>
+
+      {showChat && !onContactAgency && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="relative w-full max-w-5xl bg-[#f4f7fe] dark:bg-[#0f1323] rounded-[2rem] p-6 shadow-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-black italic text-slate-900 dark:text-white">
+                Discussion avec {agency?.name || 'l\'agence'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowChat(false)}
+                className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:bg-slate-50 transition-all"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <ChatPanel
+                role="CLIENT"
+                selfId={userData?.id}
+                initialTarget={{ type: 'AGENCY', id: agencyId, label: agency?.name }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* CARTE PRINCIPALE */}
@@ -91,13 +134,25 @@ export const AgencyDetailsView = ({ agencyId, userData, onBack }: { agencyId: st
               <ContactRow icon={<Phone size={16} />} label="Téléphone" value={agency?.phone} />
               <ContactRow icon={<Mail size={16} />} label="Email" value={agency?.email} />
             </div>
+            {(agency?.ratingsCount ?? 0) > 0 && (
+              <div className="pt-6 border-t border-white/10">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-[10px] font-black tracking-widest text-slate-400">Note clients</span>
+                </div>
+                <p className="text-xl font-black italic flex items-center gap-2">
+                  <span className="text-amber-400">★</span>
+                  {Number(agency?.averageRating ?? 0).toFixed(1)}
+                  <span className="text-[11px] font-bold text-slate-400">({agency?.ratingsCount} avis)</span>
+                </p>
+              </div>
+            )}
             <div className="pt-6 border-t border-white/10">
               <div className="flex items-center gap-3 mb-2">
                 <CreditCard className="text-blue-400" size={18} />
                 <span className="text-[10px] font-black  tracking-widest text-slate-400">Conditions</span>
               </div>
-              <p className="text-xl font-black italic">{agency?.depositPercentage}% {"d'acompte"}</p>
-              <p className="text-[10px] text-slate-400 mt-1 ">Requis pour confirmer la réservation</p>
+              <p className="text-xl font-black italic">{agency?.depositPercentage}% {"de caution"}</p>
+              <p className="text-[10px] text-slate-400 mt-1 ">Caution restituée au retour, déduction faite des dommages</p>
             </div>
           </div>
         </div>

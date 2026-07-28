@@ -108,15 +108,18 @@ export const fr = {
     transactions: "Transactions",
     roles: "Postes & Rôles",
     staff: "Gestion Staff",
-    stats: "Statistiques", 
+    stats: "Statistiques",
     users: "Utilisateurs",
     categories: "Catégories",
     vehicles: "Véhicles",
+    drivers: "Chauffeurs",
     subscription: "Abonnement",
+    upgrade: "Passer en organisation",
     settings: "Configuration",
     status: "Réseau en Direct",
     logout: "Déconnexion",
-    install: "Installer l'app"
+    install: "Installer l'app",
+    profile: "Profil"
   },
   views: {
     PROFILE: "Profil",

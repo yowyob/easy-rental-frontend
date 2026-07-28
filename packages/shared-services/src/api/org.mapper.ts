@@ -34,6 +34,7 @@ export function normalizeOrganization(raw: Record<string, unknown> | null | unde
     ),
     governanceStatus: raw.governanceStatus ?? raw.governance_status,
     kernelOrganizationId: raw.kernelOrganizationId ?? raw.kernel_organization_id,
+    accountType: raw.accountType ?? raw.account_type,
   } as Record<string, unknown>;
 }
 

@@ -21,6 +21,7 @@ export const ReservationsView = ({ userData, t, staffPermissions }: any) => {
   
   const [activeModal, setActiveModal] = useState<'FORM' | 'DETAILS' | 'CONFIRM' | null>(null);
   const [selectedRentalId, setSelectedRentalId] = useState<string | null>(null);
+  const [inspectionRentalId, setInspectionRentalId] = useState<string | null>(null);
   const [resources, setResources] = useState({ vehicles: [] as any, drivers: [] as any});
   const [formError, setFormError] = useState<string | null>(null);
   const [formLoading, setFormLoading] = useState(false);
@@ -56,19 +57,16 @@ export const ReservationsView = ({ userData, t, staffPermissions }: any) => {
     setActiveModal(null); // Ferme la popup de confirmation
     
     try {
-      // 1. Enregistrement du solde Cash si nécessaire
+      // 1. Enregistrement du solde Cash si nécessaire → atteindre le statut PAID
       if (!isFullPaid && remaining > 0) {
         const payRes = await rentalService.payRental(rental.id, { amount: remaining, method: 'CASH' });
         if (!payRes.ok) throw new Error(payRes.data?.message);
       }
 
-      // 2. Démarrage de la location
-      const startRes = await rentalService.startRental(rental.id);
-      if (startRes.ok) {
-          await loadData();
-      } else {
-          throw new Error(startRes.data?.message);
-      }
+      // 2. R2 : plus de démarrage direct — on ouvre le dossier sur l'onglet Inspection
+      // pour que l'agent réalise le check-in (photos + checklist) avant la remise des clés.
+      await loadData();
+      setInspectionRentalId(rental.id);
     } catch (e: any) {
       alert(e.message || t.reservations.errorProcess);
     } finally {
@@ -243,7 +241,16 @@ export const ReservationsView = ({ userData, t, staffPermissions }: any) => {
           />
       )}
 
-      {selectedRentalId && <RentalDetailsModal t={t} rentalId={selectedRentalId} onClose={() => setSelectedRentalId(null)} />}
+      {selectedRentalId && <RentalDetailsModal t={t} rentalId={selectedRentalId} onClose={() => setSelectedRentalId(null)} onValidated={loadData} />}
+      {inspectionRentalId && (
+        <RentalDetailsModal
+          t={t}
+          rentalId={inspectionRentalId}
+          initialTab="INSPECTION"
+          onClose={() => setInspectionRentalId(null)}
+          onValidated={loadData}
+        />
+      )}
     </div>
   );
 };

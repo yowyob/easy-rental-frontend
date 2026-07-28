@@ -22,10 +22,18 @@ import { GovernanceBanner } from '../components/GovernanceBanner';
 import { ReservationsView } from '../views/ReservationsView';
 import { RentalsView } from '../views/RentalsView';
 import { TransactionsView } from '../views/TransactionsView';
+import { FreelanceVehiclesView } from '../views/freelance/FreelanceVehiclesView';
+import { FreelanceDriversView } from '../views/freelance/FreelanceDriversView';
+import { FreelanceReservationsView } from '../views/freelance/FreelanceReservationsView';
+import { FreelanceRentalsView } from '../views/freelance/FreelanceRentalsView';
+import { FreelanceTransactionsView } from '../views/freelance/FreelanceTransactionsView';
+import { UpgradeToCompanyView } from '../views/freelance/UpgradeToCompanyView';
 
 import { Loader2 } from 'lucide-react';
 import { fr } from '../locales/fr';
 import { en } from '../locales/en';
+import { fr as agencyFr } from '../../agency/locales/fr';
+import { en as agencyEn } from '../../agency/locales/en';
 
 export default function OrganisationDashboard() {
   const [currentView, setCurrentView] = useState<string>('DASHBOARD');
@@ -41,6 +49,8 @@ export default function OrganisationDashboard() {
   const [orgData, setOrgData] = useState<any>(null);
 
   const t = lang === 'FR' ? fr : en;
+  const agencyT = lang === 'FR' ? agencyFr : agencyEn;
+  const isFreelance = (orgData?.accountType || '').toUpperCase() === 'FREELANCE';
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -271,13 +281,37 @@ export default function OrganisationDashboard() {
           <div className="max-w-[1600px] mx-auto">
             <GovernanceBanner orgData={orgData} />
             {currentView === 'DASHBOARD' && <DashboardView orgData={orgData} t={t} />}
-            {currentView === 'RESERVATIONS' && <ReservationsView orgData={orgData} t={t} />}
-            {currentView === 'RENTALS' && <RentalsView orgData={orgData} t={t} />}
-            {currentView === 'TRANSACTIONS' && <TransactionsView orgData={orgData} t={t} />}
+
+            {currentView === 'RESERVATIONS' && (
+              isFreelance
+                ? <FreelanceReservationsView agencyId={userData?.defaultAgencyId} organizationId={orgData?.id} userData={userData} t={agencyT} />
+                : <ReservationsView orgData={orgData} t={t} />
+            )}
+            {currentView === 'RENTALS' && (
+              isFreelance
+                ? <FreelanceRentalsView agencyId={userData?.defaultAgencyId} organizationId={orgData?.id} userData={userData} t={agencyT} />
+                : <RentalsView orgData={orgData} t={t} />
+            )}
+            {currentView === 'TRANSACTIONS' && (
+              isFreelance
+                ? <FreelanceTransactionsView agencyId={userData?.defaultAgencyId} organizationId={orgData?.id} userData={userData} t={agencyT} />
+                : <TransactionsView orgData={orgData} t={t} />
+            )}
+            {currentView === 'VEHICLES' && (
+              isFreelance
+                ? <FreelanceVehiclesView agencyId={userData?.defaultAgencyId} organizationId={orgData?.id} userData={userData} t={agencyT} />
+                : <VehiclesView orgData={orgData} t={t} />
+            )}
+            {currentView === 'DRIVERS' && isFreelance && (
+              <FreelanceDriversView agencyId={userData?.defaultAgencyId} organizationId={orgData?.id} userData={userData} t={agencyT} />
+            )}
+            {currentView === 'UPGRADE' && isFreelance && (
+              <UpgradeToCompanyView />
+            )}
+
             {currentView === 'AGENCIES' && <AgenciesView orgData={orgData} setCurrentView={setCurrentView} t={t} />}
             {currentView === 'ROLES' && <RolesView orgData={orgData} t={t} />}
             {currentView === 'STAFF' && <StaffView orgData={orgData} t={t} />}
-            {currentView === 'VEHICLES' && <VehiclesView orgData={orgData} t={t} />}
             {currentView === 'CATEGORIES' && <VehicleCategoriesView orgData={orgData} t={t} />}
             {currentView === 'SUBSCRIPTION' && <SubscriptionView orgData={orgData} t={t} />}
             {currentView === 'PROFILE' && <ProfileView orgData={orgData} userData={userData} onUpdate={fetchProfile} t={t} />}

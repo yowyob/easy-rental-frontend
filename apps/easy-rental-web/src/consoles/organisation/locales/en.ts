@@ -85,15 +85,18 @@ export const en = {
     transactions: "Transactions",
     roles: "Positions & Roles",
     staff: "Staff Management",
-    stats: "Statistics", 
+    stats: "Statistics",
     users: "Users",
     categories: "Categories",
     vehicles: "Vehicles",
+    drivers: "Drivers",
     subscription: "Subscription",
+    upgrade: "Switch to organization",
     settings: "Settings",
     status: "Network Live",
     logout: "Logout",
-    install: "Install App"
+    install: "Install App",
+    profile: "Profile"
   },
   dashboard: {
     agencies: "Agencies",

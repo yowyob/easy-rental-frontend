@@ -13,6 +13,17 @@ export type RegisterClientResult =
   | { ok: true; emailVerificationRequired: false; user?: Record<string, unknown> }
   | { ok: false; error: string };
 
+const detectConsoleSource = (): string => {
+  if (typeof window === 'undefined') return 'UNKNOWN';
+  const path = window.location.pathname || '';
+  if (path.startsWith('/organisation/freelance')) return 'FREELANCE';
+  if (path.startsWith('/organisation')) return 'ORGANIZATION';
+  if (path.startsWith('/agency')) return 'AGENCY';
+  if (path.startsWith('/client')) return 'CLIENT';
+  if (path.startsWith('/admin')) return 'ADMIN';
+  return 'UNKNOWN';
+};
+
 const refreshSessionToken = async (): Promise<string | null> => {
   const res = await client.post<{ token?: string }>('/auth/refresh', {});
   const token = res.data?.token;
@@ -46,7 +57,8 @@ export const authService = {
     };
   },
   login: async (data: { email: string; password: string }): Promise<LoginResult> => {
-    const res = await client.post<any>('/auth/login', data);
+    const source = detectConsoleSource();
+    const res = await client.post<any>('/auth/login', { ...data, source });
     const dataObj = res.data as Record<string, unknown> | null;
     const mfaRequired =
       dataObj?.mfa_required === true || dataObj?.mfaRequired === true || res.status === 202;

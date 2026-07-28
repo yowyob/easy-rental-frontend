@@ -28,4 +28,5 @@ export const orgService = {
   },
   getSubscriptionRemaining: (id: string) => client.get<any>(`/api/org/${id}/subscription/remaining`),
   getOrgsByPlan: (planId: string) => client.get<any[]>(`/api/org/plan/${planId}`),
+  upgradeToCompany: () => client.put<Record<string, unknown>>('/api/org/upgrade-to-company', {}),
 };

@@ -46,7 +46,10 @@ const ReservationDetail = ({ data, onClose, onCancel, cancelling }: any) => {
 
   const remaining = (rental?.totalAmount || 0) - (rental?.amountPaid || 0);
   const hasPaidOnline = Number(rental?.amountPaid ?? 0) > 0;
-  const estimatedDeposit = Math.round(Number(rental?.totalAmount ?? 0) * 0.6);
+  // R2 : acompte = champ backend (requestedUpfront/depositAmount) ; fallback 60% du total.
+  const estimatedDeposit = Math.round(
+    Number(rental?.requestedUpfront ?? rental?.depositAmount ?? Number(rental?.totalAmount ?? 0) * 0.6),
+  );
   const vehicleImage = vehicle?.images?.[0]
     ? resolveMediaDisplayUrl(vehicle.images[0])
     : VEHICLE_FALLBACK;

@@ -35,10 +35,24 @@ export {
 } from './support-visitor';
 export type { SupportVisitorContext } from './support-visitor';
 export { rentalService } from './rental.service';
+export { inspectionService, DEFAULT_INSPECTION_ITEMS, INSPECTION_ITEM_LABELS, ITEM_STATUS_LABELS } from './inspection.service';
+export type { Inspection, InspectionItem, InspectionComparison, ItemDiff } from './inspection.service';
+export { loyaltyService } from './loyalty.service';
+export type { LoyaltyBalance, LoyaltyEntry } from './loyalty.service';
+export { trackingService } from './tracking.service';
+export type { Position, TrackingSummary } from './tracking.service';
+export { ratingService } from './rating.service';
+export type { Rating, RatingStats } from './rating.service';
 export { statsService } from './stats.service';
+export { statisticsService } from './statistics.service';
+export type { PlatformStats } from './statistics.service';
+export { auditService } from './audit.service';
+export type { AuditEvent, AuditEventFilters } from './audit.service';
 export { transactionService } from './transaction.service';
 export { reviewService } from './review.service';
 export type { ReviewItem, ReviewModerationStats, PlatformFeedbackPayload } from './review.service';
+export { conversationService } from './conversation.service';
+export type { Conversation, ChatMessage } from './conversation.service';
 export {
   clearAuthSession,
   decodeJwtPayload,

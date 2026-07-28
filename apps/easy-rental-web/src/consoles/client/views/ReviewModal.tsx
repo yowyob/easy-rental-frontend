@@ -2,7 +2,7 @@
 'use client';
 import React, { useState } from 'react';
 import { X, Loader2, Star } from 'lucide-react';
-import { reviewService } from '@pwa-easy-rental/shared-services';
+import { reviewService, ratingService } from '@pwa-easy-rental/shared-services';
 
 type ReviewModalProps = {
   rental: any;
@@ -13,29 +13,48 @@ type ReviewModalProps = {
   onSubmitted: () => void;
 };
 
-export const ReviewModal = ({ rental, vehicle, driver, authorName, onClose, onSubmitted }: ReviewModalProps) => {
+export const ReviewModal = ({ rental, vehicle, driver, agency, authorName, onClose, onSubmitted }: ReviewModalProps & { agency?: any }) => {
   const [vehicleRating, setVehicleRating] = useState(5);
   const [driverRating, setDriverRating] = useState(5);
+  const [agencyRating, setAgencyRating] = useState(5);
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const agencyId = agency?.id || rental?.agencyId;
+  const clientId = rental?.clientId;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!vehicle?.id || !driver?.id) {
-      setError('Véhicule et chauffeur requis pour noter.');
-      return;
-    }
     setLoading(true);
     setError('');
     try {
-      const base = { comment, authorName: authorName || rental?.clientName || 'Client' };
-      const [vRes, dRes] = await Promise.all([
-        reviewService.addReview({ ...base, resourceId: vehicle.id, resourceType: 'VEHICLE', rating: vehicleRating }),
-        reviewService.addReview({ ...base, resourceId: driver.id, resourceType: 'DRIVER', rating: driverRating }),
-      ]);
-      if (!vRes.ok || !dRes.ok) {
-        setError('Impossible d\'enregistrer vos avis.');
+      const tasks: Promise<any>[] = [];
+      // Avis véhicule/chauffeur (feature existante) — seulement si présents
+      if (vehicle?.id && driver?.id) {
+        const base = { comment, authorName: authorName || rental?.clientName || 'Client' };
+        tasks.push(reviewService.addReview({ ...base, resourceId: vehicle.id, resourceType: 'VEHICLE', rating: vehicleRating }));
+        tasks.push(reviewService.addReview({ ...base, resourceId: driver.id, resourceType: 'DRIVER', rating: driverRating }));
+      }
+      // Note agence (R2) — nécessite location COMPLETED + client identifié
+      if (agencyId && clientId) {
+        tasks.push(ratingService.submit({
+          rentalId: rental.id,
+          raterType: 'CLIENT',
+          raterId: clientId,
+          targetType: 'AGENCY',
+          targetId: agencyId,
+          stars: agencyRating,
+          comment: comment || null,
+        }));
+      }
+      if (tasks.length === 0) {
+        setError('Aucune cible à noter pour cette location.');
+        return;
+      }
+      const results = await Promise.all(tasks);
+      if (results.some((r) => !r.ok)) {
+        setError('Certains avis n\'ont pas pu être enregistrés (déjà notés ?).');
         return;
       }
       onSubmitted();
@@ -66,8 +85,9 @@ export const ReviewModal = ({ rental, vehicle, driver, authorName, onClose, onSu
 
         {error && <p className="text-xs font-bold text-red-500">{error}</p>}
 
-        <StarRow label="Véhicule" value={vehicleRating} onChange={setVehicleRating} />
-        <StarRow label="Chauffeur" value={driverRating} onChange={setDriverRating} />
+        {vehicle?.id && <StarRow label="Véhicule" value={vehicleRating} onChange={setVehicleRating} />}
+        {driver?.id && <StarRow label="Chauffeur" value={driverRating} onChange={setDriverRating} />}
+        {(agency?.id || rental?.agencyId) && <StarRow label="Agence" value={agencyRating} onChange={setAgencyRating} />}
 
         <textarea
           value={comment}

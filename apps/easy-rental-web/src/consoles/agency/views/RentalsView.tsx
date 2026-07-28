@@ -57,16 +57,13 @@ export const RentalsView = ({ userData, t, staffPermissions }: { userData: any, 
       }
 
       const id = res.data?.rentalId;
-      if (id) {
-        const startRes = await rentalService.startRental(id);
-        if (!startRes.ok) {
-          setFormError(startRes.data?.message || 'Impossible de démarrer la location.');
-          return;
-        }
-      }
-
       setActiveModal(null);
       await loadData();
+      // R2 : plus de démarrage direct — on ouvre le dossier sur l'onglet Inspection
+      // pour encaisser puis réaliser le check-in avant remise des clés.
+      if (id) {
+        setSelectedRentalId(id);
+      }
     } catch {
       setFormError(t.reservations?.errorProcess || 'Erreur de connexion au serveur.');
     } finally {

@@ -27,8 +27,10 @@ import { VehiclesView } from '../views/VehiclesView';
 import { DriversView } from '../views/DriversView';
 import { ReservationsView } from '../views/ReservationsView';
 import { RentalsView } from '../views/RentalsView';
+import { InspectionsView } from '../views/InspectionsView';
 import { TransactionsView } from '../views/TransactionsView';
 import { NotificationsView } from '../views/NotificationsView';
+import { ChatPanel } from '../../shared-chat/ChatPanel';
 
 import { Loader2 } from 'lucide-react';
 import { fr } from '../locales/fr';
@@ -246,6 +248,10 @@ export default function AgencyDashboard() {
                 <RentalsView userData={userData} staffPermissions={staffPermissions} t={t} />
             )}
 
+            {currentView === 'INSPECTIONS' && hasPermission(userData, staffPermissions, 'rental:list') && (
+                <InspectionsView userData={userData} t={t} />
+            )}
+
             {currentView === 'TRANSACTIONS' && hasPermission(userData, staffPermissions, 'finance:transactions') && (
                 <TransactionsView userData={userData} t={t} />
             )}
@@ -260,6 +266,10 @@ export default function AgencyDashboard() {
 
             {currentView === 'NOTIFICATIONS' && (
                 <NotificationsView agencyId={agencyData?.id} t={t} />
+            )}
+
+            {currentView === 'MESSAGES' && (
+                <ChatPanel role="AGENCY" selfId={userData?.agencyId} />
             )}
 
             {currentView === 'PROFILE' && (

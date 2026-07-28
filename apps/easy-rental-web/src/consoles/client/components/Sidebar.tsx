@@ -3,7 +3,7 @@
 import React from 'react';
 import {
   Home, Store, CalendarCheck, CalendarDays, Bell,
-  Download, LogOut, X, ChevronRight, Activity,
+  Download, LogOut, X, ChevronRight, Activity, Gift, MessageSquare,
 } from 'lucide-react';
 
 export const Sidebar = ({
@@ -50,6 +50,8 @@ export const Sidebar = ({
               <>
                 <SidebarItem icon={<CalendarCheck size={20} />} label={t?.sidebar?.myRentals ?? 'Mes locations'} active={currentView === 'MY_BOOKINGS'} onClick={() => { setCurrentView('MY_BOOKINGS'); setSidebarOpen(false); }} />
                 <SidebarItem icon={<CalendarDays size={20} />} label={t?.sidebar?.reservations ?? 'Réservations'} active={currentView === 'MY_RESERVATIONS'} onClick={() => { setCurrentView('MY_RESERVATIONS'); setSidebarOpen(false); }} />
+                <SidebarItem icon={<Gift size={20} />} label={t?.sidebar?.loyalty ?? 'Fidélité'} active={currentView === 'LOYALTY'} onClick={() => { setCurrentView('LOYALTY'); setSidebarOpen(false); }} />
+                <SidebarItem icon={<MessageSquare size={20} />} label={t?.sidebar?.messages ?? 'Messages'} active={currentView === 'MESSAGES'} onClick={() => { setCurrentView('MESSAGES'); setSidebarOpen(false); }} />
                 <SidebarItem icon={<Bell size={20} />} label={t?.sidebar?.notifications ?? 'Notifications'} active={currentView === 'NOTIFICATIONS'} onClick={() => { setCurrentView('NOTIFICATIONS'); setSidebarOpen(false); }} badge={unreadCount > 0 ? (unreadCount > 9 ? '9+' : String(unreadCount)) : undefined} />
               </>
             )}

@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Loader2, RefreshCw, CheckCircle2, XCircle, ShieldAlert } from 'lucide-react';
+import { Loader2, RefreshCw, CheckCircle2, XCircle, ShieldAlert, Ban, PlayCircle } from 'lucide-react';
 import { adminService } from '@pwa-easy-rental/shared-services';
 import type { NormalizedSubscriptionPlan } from '@pwa-easy-rental/shared-services';
 
@@ -14,6 +14,7 @@ type OrgRow = {
   currentVehicles: number;
   governanceStatus: string;
   accountType: string;
+  status: string;
 };
 
 function normalizeOrg(raw: Record<string, unknown>): OrgRow {
@@ -27,6 +28,7 @@ function normalizeOrg(raw: Record<string, unknown>): OrgRow {
     currentVehicles: Number(raw.currentVehicles ?? raw.current_vehicles ?? 0),
     governanceStatus: String(raw.governanceStatus ?? raw.governance_status ?? 'APPROVED'),
     accountType: String(raw.accountType ?? raw.account_type ?? 'COMPANY').toUpperCase(),
+    status: String(raw.status ?? raw.STATUS ?? 'ACTIVE').toUpperCase(),
   };
 }
 
@@ -42,6 +44,7 @@ export const OrganizationsView = ({ plans, onDataChanged }: OrganizationsViewPro
   const [loading, setLoading] = useState(true);
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [governanceId, setGovernanceId] = useState<string | null>(null);
+  const [suspensionId, setSuspensionId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [filterTab, setFilterTab] = useState<FilterTab>('ALL');
@@ -111,6 +114,29 @@ export const OrganizationsView = ({ plans, onDataChanged }: OrganizationsViewPro
       onDataChanged?.();
     }
     setGovernanceId(null);
+  };
+
+  const handleSuspension = async (orgId: string, suspend: boolean) => {
+    let reason = '';
+    if (suspend) {
+      const input = window.prompt('Motif de la suspension :');
+      if (!input) return;
+      reason = input;
+    }
+    setSuspensionId(orgId);
+    setError('');
+    setMessage('');
+    const res = suspend
+      ? await adminService.suspendOrganization(orgId, reason)
+      : await adminService.reactivateOrganization(orgId);
+    if (!res.ok) {
+      setError(suspend ? "Échec de la suspension." : 'Échec de la réactivation.');
+    } else {
+      setMessage(suspend ? 'Organisation suspendue.' : 'Organisation réactivée.');
+      await loadOrgs();
+      onDataChanged?.();
+    }
+    setSuspensionId(null);
   };
 
   if (loading) {
@@ -237,6 +263,7 @@ export const OrganizationsView = ({ plans, onDataChanged }: OrganizationsViewPro
               <th className="p-4">Quotas</th>
               <th className="p-4">Gouvernance</th>
               <th className="p-4">Assigner plan</th>
+              <th className="p-4">Statut</th>
             </tr>
           </thead>
           <tbody>
@@ -295,12 +322,43 @@ export const OrganizationsView = ({ plans, onDataChanged }: OrganizationsViewPro
                       ))}
                     </select>
                   </td>
+                  <td className="p-4">
+                    {org.status === 'SUSPENDED' ? (
+                      <button
+                        type="button"
+                        disabled={suspensionId === org.id}
+                        onClick={() => handleSuspension(org.id, false)}
+                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-black uppercase italic tracking-widest text-white bg-green-600 rounded-xl hover:bg-green-700 transition-all disabled:opacity-50"
+                      >
+                        {suspensionId === org.id ? (
+                          <Loader2 className="animate-spin" size={14} />
+                        ) : (
+                          <PlayCircle size={14} />
+                        )}
+                        Réactiver
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={suspensionId === org.id}
+                        onClick={() => handleSuspension(org.id, true)}
+                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-black uppercase italic tracking-widest text-red-500 border border-red-200 dark:border-red-500/30 rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10 transition-all disabled:opacity-50"
+                      >
+                        {suspensionId === org.id ? (
+                          <Loader2 className="animate-spin" size={14} />
+                        ) : (
+                          <Ban size={14} />
+                        )}
+                        Suspendre
+                      </button>
+                    )}
+                  </td>
                 </tr>
               );
             })}
             {filteredOrgs.length === 0 && (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-slate-400 italic">
+                <td colSpan={6} className="p-8 text-center text-slate-400 italic">
                   Aucune organisation enregistrée.
                 </td>
               </tr>

@@ -36,17 +36,35 @@ export const TransactionsView = ({ userData, t }: { userData: any, t: any }) => 
   const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
 
-  const totalIncome = transactions.filter(tr => tr.type === 'RENTAL_PAYMENT').reduce((acc, tr) => acc + Math.abs(tr.amount || 0), 0);
-  const totalRefund = transactions.filter(tr => tr.type !== 'RENTAL_PAYMENT').reduce((acc, tr) => acc + Math.abs(tr.amount || 0), 0);
+  const num = (v: any) => Number(v ?? 0) || 0;
+  // Revenu réel de l'agence = somme des parts location (rental_portion) :
+  // acomptes/soldes location + retenues caution + suppléments encaissés.
+  const totalRevenue = transactions.reduce((acc, tr) => acc + num(tr.rentalPortion), 0);
+  // Cautions encore détenues (escrow) = caution encaissée − remboursée − retenue.
+  const cautionIn = transactions
+    .filter(tr => tr.category === 'RENTAL_FEE' || tr.category === 'CAUTION')
+    .reduce((acc, tr) => acc + num(tr.cautionPortion), 0);
+  const cautionRefunded = transactions
+    .filter(tr => tr.category === 'CAUTION_REFUND')
+    .reduce((acc, tr) => acc + num(tr.amount), 0);
+  const cautionRetained = transactions
+    .filter(tr => tr.category === 'CAUTION_RETENTION')
+    .reduce((acc, tr) => acc + num(tr.amount), 0);
+  const cautionHeld = Math.max(0, cautionIn - cautionRefunded - cautionRetained);
+  const supplementDue = transactions
+    .filter(tr => tr.category === 'SUPPLEMENT_DUE')
+    .reduce((acc, tr) => acc + num(tr.amount), 0)
+    - transactions.filter(tr => tr.category === 'SUPPLEMENT_PAID').reduce((acc, tr) => acc + num(tr.amount), 0);
 
   if (loading) return <div className="h-96 flex items-center justify-center"><Loader2 className="animate-spin text-[#0528d6] size-10" /></div>;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard label={t.transactions.agencyTitle} value={transactions.length} icon={<Banknote />} />
-        <StatCard label={t.transactions.rentalIncome} value={`${totalIncome.toLocaleString()} XAF`} icon={<ArrowUpRight className="text-green-500"/>} />
-        <StatCard label={t.transactions.refunds} value={`${totalRefund.toLocaleString()} XAF`} icon={<ArrowDownRight className="text-red-500" />} />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard label="Revenu réel" value={`${totalRevenue.toLocaleString()} XAF`} icon={<ArrowUpRight className="text-green-500"/>} />
+        <StatCard label="Cautions détenues" value={`${cautionHeld.toLocaleString()} XAF`} icon={<Banknote className="text-[#0528d6]"/>} />
+        <StatCard label="Remboursements" value={`${cautionRefunded.toLocaleString()} XAF`} icon={<ArrowDownRight className="text-red-500" />} />
+        <StatCard label="Créances (suppléments)" value={`${Math.max(0, supplementDue).toLocaleString()} XAF`} icon={<ArrowUpRight className="text-amber-500"/>} />
       </div>
 
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white dark:bg-[#1a1d2d] p-4 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm">
@@ -78,29 +96,50 @@ export const TransactionsView = ({ userData, t }: { userData: any, t: any }) => 
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {paginated.map(tx => {
-              const isIncome = tx.type === 'RENTAL_PAYMENT';
-              const absAmount = Math.abs(tx.amount || 0);
+              const cat = tx.category || 'RENTAL_FEE';
+              const amount = Math.abs(tx.amount || 0);
+              const rental = Number(tx.rentalPortion ?? 0);
+              const caution = Number(tx.cautionPortion ?? 0);
+              // Tonalité : revenu (vert), caution/escrow (bleu), sortie (rouge), créance (ambre).
+              const isOut = cat === 'CAUTION_REFUND';
+              const isCreance = cat === 'SUPPLEMENT_DUE';
+              const isCaution = cat === 'CAUTION';
+              const tone = isOut ? 'red' : isCreance ? 'amber' : isCaution ? 'blue' : 'green';
+              const toneMap: Record<string, string> = {
+                green: 'bg-green-50 text-green-600', red: 'bg-red-50 text-red-600',
+                blue: 'bg-blue-50 text-[#0528d6]', amber: 'bg-amber-50 text-amber-600',
+              };
+              const amtColor: Record<string, string> = {
+                green: 'text-green-500', red: 'text-red-500', blue: 'text-[#0528d6]', amber: 'text-amber-500',
+              };
+              const sign = isOut ? '-' : isCreance ? '' : '+';
 
               return (
                 <div key={tx.id} onClick={() => setSelectedTx(tx.id)} className="p-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer transition-colors">
                   <div className="flex items-center gap-5 min-w-0">
-                    <div className={`size-12 rounded-2xl flex items-center justify-center shrink-0 ${isIncome ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
-                      {isIncome ? <ArrowUpRight size={24} /> : <ArrowDownRight size={24} />}
+                    <div className={`size-12 rounded-2xl flex items-center justify-center shrink-0 ${toneMap[tone]}`}>
+                      {isOut ? <ArrowDownRight size={24} /> : <ArrowUpRight size={24} />}
                     </div>
                     <div className="overflow-hidden">
-                      <h4 className="font-black text-slate-900 dark:text-white  italic tracking-tighter truncate max-w-xs md:max-w-md">{tx.description}</h4>
-                      <div className="flex items-center gap-3 mt-1">
-                        <span className="text-[9px] font-bold text-slate-400  tracking-widest shrink-0">{new Date(tx.date).toLocaleDateString()}</span>
+                      <h4 className="font-black text-slate-900 dark:text-white italic tracking-tighter truncate max-w-xs md:max-w-md">{tx.description}</h4>
+                      <div className="flex items-center gap-3 mt-1 flex-wrap">
+                        <span className="text-[9px] font-bold text-slate-400 tracking-widest shrink-0">{new Date(tx.date).toLocaleDateString()}</span>
                         <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[8px] font-mono text-slate-500 truncate">{tx.reference}</span>
-                        {tx.method && <span className="px-2 py-0.5 bg-blue-50 text-[#0528d6] rounded text-[8px] font-black  shrink-0">{tx.method}</span>}
+                        {tx.method && <span className="px-2 py-0.5 bg-blue-50 text-[#0528d6] rounded text-[8px] font-black shrink-0">{tx.method}</span>}
+                        {/* Détail ventilation pour un paiement location */}
+                        {cat === 'RENTAL_FEE' && caution > 0 && (
+                          <span className="text-[8px] text-slate-400 italic">dont {rental.toLocaleString()} location + {caution.toLocaleString()} caution</span>
+                        )}
                       </div>
                     </div>
                   </div>
                   <div className="text-right shrink-0 ml-4">
-                    <p className={`text-lg font-black italic tracking-tighter ${isIncome ? 'text-green-500' : 'text-red-500'}`}>
-                      {isIncome ? '+' : '-'}{absAmount.toLocaleString()} XAF
+                    <p className={`text-lg font-black italic tracking-tighter ${amtColor[tone]}`}>
+                      {sign}{amount.toLocaleString()} XAF
                     </p>
-                    <p className={`text-[8px] font-black  tracking-widest mt-1 ${tx.status === 'COMPLETED' || tx.status === 'SUCCESS' ? 'text-green-600' : 'text-red-600'}`}>{tx.status}</p>
+                    <p className="text-[8px] font-black tracking-widest mt-1 text-slate-400">
+                      {isCreance ? 'CRÉANCE' : cat === 'CAUTION_RETENTION' ? 'REVENU' : isOut ? 'REMBOURSÉ' : isCaution ? 'CAUTION' : 'ENCAISSÉ'}
+                    </p>
                   </div>
                 </div>
               );
